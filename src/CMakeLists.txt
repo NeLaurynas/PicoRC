@@ -62,9 +62,9 @@ target_compile_options(PicoRC PRIVATE
 		$<$<COMPILE_LANGUAGE:C>:-Wno-old-style-declaration>
 )
 
-#target_compile_definitions(PicoRC PRIVATE
-#		CYW43_PIO_CLOCK_DIV_DYNAMIC=1
-#)
+target_compile_definitions(PicoRC PRIVATE
+		CYW43_PIO_CLOCK_DIV_DYNAMIC=1
+)
 
 target_link_options(PicoRC PRIVATE
 		-march=armv8-m.main

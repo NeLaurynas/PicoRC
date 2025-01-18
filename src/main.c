@@ -3,20 +3,20 @@
 
 #include <stdio.h>
 #include <hardware/clocks.h>
-#include <pico/stdio.h>
-#include "boards/pico2_w.h"
 #include <pico/cyw43_arch.h>
-#include <pico/time.h>
 #include <pico/cyw43_driver.h>
+#include <pico/stdio.h>
+#include <pico/time.h>
+#include "boards/pico2_w.h"
 
 #include "defines/config.h"
 
 int main() {
-	set_sys_clock_khz(96'000, false);
+	set_sys_clock_khz(18'000, false);
 
 	stdio_init_all();
 	cyw43_arch_init_with_country(CYW43_COUNTRY_LITHUANIA);
-	// cyw43_set_pio_clock_divisor(2, 0);
+	cyw43_set_pio_clock_divisor(1, 0);
 
 	static bool on = true;
 	for (;;) {

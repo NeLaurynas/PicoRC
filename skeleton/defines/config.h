@@ -15,4 +15,6 @@ typedef int8_t i8;
 
 #define INTERNAL_LED 0
 
+#define DBG true
+
 #endif //CONFIG_H

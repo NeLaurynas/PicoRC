@@ -1,0 +1,4 @@
+[submodule "lib/bluepad32"]
+	path = lib/bluepad32
+	url = git@github.com:NeLaurynas/bluepad32.git
+	branch = pico-rc

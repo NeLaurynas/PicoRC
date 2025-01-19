@@ -18,15 +18,13 @@ int main() {
 	cyw43_arch_init_with_country(CYW43_COUNTRY_LITHUANIA);
 	cyw43_set_pio_clock_divisor(1, 0);
 
+	// step 1 - acquire connection
+	// step 2 - read inputz
+
 	static bool on = true;
 	for (;;) {
 		cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, on);
 		on = !on;
 		sleep_ms(1000);
-		const auto freq_hz = clock_get_hz(clk_sys);
-		// printf("asdf %d - %d\n", freq_hz, result);
-
-		const float freq_mhz = (float)freq_hz / 1'000'000.0f;
-		printf("System clock: %d Hz, %.2f MHz\n", freq_hz, freq_mhz);
 	}
 }

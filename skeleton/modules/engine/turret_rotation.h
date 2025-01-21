@@ -3,7 +3,7 @@
 
 #ifndef TURRET_ROTATION_H
 #define TURRET_ROTATION_H
-#include "defines/config.h"
+#include "shared_config.h"
 
 void turret_rotation_init();
 void turret_rotation_rotate(i16 val);

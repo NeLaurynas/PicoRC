@@ -2,3 +2,6 @@
 	path = lib/bluepad32
 	url = git@github.com:NeLaurynas/bluepad32.git
 	branch = pico-rc
+[submodule "lib/pico-shared"]
+	path = lib/pico-shared
+	url = git@github.com:NeLaurynas/pico-shared.git

@@ -22,19 +22,20 @@ add_executable(${PROJECT_NAME}
 		defines/config.h
 		main.c
 		rc_platform.c
+		shared_config.h
 		state.c
 		state.h
 		renderer.c
 		renderer.h
-		utils.c
-		utils.h
 		modules/engine/turret_rotation.c
 		modules/engine/turret_rotation.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
-		${BLUEPAD32_ROOT}/src/components/bluepad32/include)
+		${BLUEPAD32_ROOT}/src/components/bluepad32/include
+		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
+)
 
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} "0.1")
@@ -105,6 +106,9 @@ include_directories(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR})
 include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/encoder/include)
 include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/decoder/include)
 include_directories(${BTSTACK_ROOT}/src)
+
+add_subdirectory(../lib/pico-shared ${CMAKE_BINARY_DIR}/pico-shared)
+target_link_libraries(${PROJECT_NAME} pico-shared)
 
 target_link_libraries(${PROJECT_NAME}
 		pico_stdlib)

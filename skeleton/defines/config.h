@@ -4,15 +4,6 @@
 #ifndef CONFIG_H
 #define CONFIG_H
 
-#include <pico/types.h>
-
-typedef uint32_t u32;
-typedef uint16_t u16;
-typedef uint8_t u8;
-typedef int32_t i32;
-typedef int16_t i16;
-typedef int8_t i8;
-
 #define DBG true
 
 #define RENDER_TICK 10'000
@@ -26,7 +17,5 @@ typedef int8_t i8;
 #define MOD_TUR_ROT_4_PIN 10
 #define MOD_TUR_ROT_DMA_CH3 2
 #define MOD_TUR_ROT_DMA_CH4 3
-
-#define INTERNAL_LED 0
 
 #endif //CONFIG_H

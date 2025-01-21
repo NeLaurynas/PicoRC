@@ -9,8 +9,8 @@
 
 #include "state.h"
 #include "utils.h"
+#include "shared_config.h"
 #include "defines/config.h"
-#include "utils.h"
 #include "modules/engine/turret_rotation.h"
 
 volatile static bool can_set_state = true;

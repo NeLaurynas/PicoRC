@@ -68,21 +68,10 @@ void turret_rotation_init() {
 	sleep_ms(1);
 }
 
-static u16 get_scaled_pwm_percentage(i16 val) {
-	const u16 x = abs(val);
-	if (x <= MOD_ENGINE_XY_DEAD_ZONE) {
-		return 0;
-	} if (x >= MOD_ENGINE_XY_MAX) {
-		return 10000;
-	}
-
-	return ((x - MOD_ENGINE_XY_DEAD_ZONE) * 100 / (MOD_ENGINE_XY_MAX - MOD_ENGINE_XY_DEAD_ZONE)) * 100;
-}
-
 void turret_rotation_rotate(i16 val) {
 	return;
 	const bool neg = val < 0;
-	const auto pwm_perc = get_scaled_pwm_percentage(val);
+	const auto pwm_perc = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 100;
 	if (neg) {
 		// disable one direction
 		gpio_put(MOD_TUR_ROT_2_PIN, false);

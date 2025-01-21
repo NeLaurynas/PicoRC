@@ -1,9 +1,10 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef STATE_H
+#ifndef STATE_Htypedef uint32_t u32;
 #define STATE_H
-#include "defines/config.h"
+
+#include <shared_config.h>
 
 typedef struct {
 	i16 x;

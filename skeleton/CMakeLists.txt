@@ -29,6 +29,8 @@ add_executable(${PROJECT_NAME}
 		renderer.h
 		modules/engine/turret_rotation.c
 		modules/engine/turret_rotation.h
+		modules/engine/main_engine.c
+		modules/engine/main_engine.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

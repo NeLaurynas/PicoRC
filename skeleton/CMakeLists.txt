@@ -22,6 +22,14 @@ add_executable(${PROJECT_NAME}
 		defines/config.h
 		main.c
 		rc_platform.c
+		state.c
+		state.h
+		renderer.c
+		renderer.h
+		utils.c
+		utils.h
+		modules/engine/turret_rotation.c
+		modules/engine/turret_rotation.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -109,9 +117,10 @@ target_link_libraries(${PROJECT_NAME}
 		bluepad32
 		hardware_clocks
 		hardware_pio
+		pico_multicore
 #		hardware_adc
-#		hardware_dma
-#		hardware_pwm
+		hardware_dma
+		hardware_pwm
 #		pico_rand
 		$<$<CONFIG:Debug>:hardware_uart>
 )

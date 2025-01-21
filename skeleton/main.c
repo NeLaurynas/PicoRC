@@ -10,10 +10,16 @@
 #include "boards/pico2_w.h"
 #include <btstack_run_loop.h>
 #include <uni.h>
+#include <pico/multicore.h>
 
+#include "renderer.h"
 #include "sdkconfig.h"
 
 #include "defines/config.h"
+#include "modules/engine/turret_rotation.h"
+
+#undef PICO_FLASH_ASSERT_ON_UNSAFE
+#define PICO_FLASH_ASSERT_ON_UNSAFE 0
 
 struct uni_platform* get_rc_platform(void);
 
@@ -24,7 +30,7 @@ int main() {
 
 #if DBG
 	sleep_ms(2000);
-	printf("Slept for 2 seconds\n");
+	printf("Slept for 2 secondss\n");
 #endif
 
 	// initialize CYW43 driver architecture (will enable BT if/because CYW43_ENABLE_BLUETOOTH == 1)
@@ -37,7 +43,7 @@ int main() {
 	uni_platform_set_custom(get_rc_platform());
 	uni_init(0, NULL);
 
-	// launch second thread
+	multicore_launch_core1(renderer_loop);
 
 	// does not return
 	btstack_run_loop_execute();

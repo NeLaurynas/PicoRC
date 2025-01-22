@@ -25,13 +25,13 @@
 struct uni_platform* get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(18'000, false);
+	set_sys_clock_khz(48'000, false);
 
 	stdio_init_all();
 
 #if DBG
 	sleep_ms(2000);
-	printf("Slept for 2 secondss\n");
+	printf("Slept for 2 seconds\n");
 #endif
 
 	if (cyw43_arch_init_with_country(CYW43_COUNTRY_LITHUANIA)) {

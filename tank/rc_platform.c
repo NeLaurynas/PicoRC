@@ -33,10 +33,12 @@ static void rc_platform_init(int argc, const char **argv) {
 static void rc_platform_on_init_complete(void) {
 	logi("rc_platform: on_init_complete()\n");
 
-	uni_bt_start_scanning_and_autoconnect_unsafe();
+	uni_bt_del_keys_unsafe();
+	uni_bt_bredr_delete_bonded_keys();
+	uni_bt_le_delete_bonded_keys();
+	// uni_bt_
 
-	// uni_bt_del_keys_unsafe();
-	uni_bt_list_keys_unsafe();
+	uni_bt_start_scanning_and_autoconnect_unsafe();
 
 	cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
 }

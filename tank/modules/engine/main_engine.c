@@ -89,7 +89,15 @@ static void set_motor_ctrl(const bool neg, const i16 val, const u16 pwm, const u
 }
 
 static void adjust_pwm(u16 *pwm) {
-	if (*pwm <= 8500) *pwm = *pwm * 0.75;
+	if (*pwm <= 4000) {
+		*pwm = *pwm * 1.15;  // Boost by 15%
+	} else if (*pwm <= 5000) {
+		*pwm = *pwm * (1.15 - 0.05 * ((*pwm - 4000) / 1000.0));  // Gradual reduction from 1.15x to 1.05x
+	} else if (*pwm <= 6000) {
+		*pwm = *pwm * (1.05 - 0.03 * ((*pwm - 5000) / 1000.0));  // Gradual reduction from 1.05x to 1.02x
+	} else if (*pwm <= 9000) {
+		*pwm = *pwm * (1.02 - 0.27 * ((*pwm - 6000) / 3000.0));  // Gradual decrease to 0.75x
+	}
 }
 
 void main_engine_vals(const i16 left, const i16 right) {
@@ -99,7 +107,7 @@ void main_engine_vals(const i16 left, const i16 right) {
 	u16 pwm_right = utils_scaled_pwm_percentage(right, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 100;
 	adjust_pwm(&pwm_left);
 	adjust_pwm(&pwm_right);
-	utils_printf("R: %d, pwm: %d\n", right, pwm_right);
+	// utils_printf("R: %d, pwm: %d\n", right, pwm_right);
 
 	set_motor_ctrl(neg_l, left, pwm_left, MOD_ENGINE_MAIN_ENABLE1, MOD_ENGINE_MAIN_ENABLE2, MOD_ENGINE_MAIN_DMA_CH1);
 	set_motor_ctrl(neg_r, right, pwm_right, MOD_ENGINE_MAIN_ENABLE3, MOD_ENGINE_MAIN_ENABLE4, MOD_ENGINE_MAIN_DMA_CH2);

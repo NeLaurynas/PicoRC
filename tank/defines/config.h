@@ -1,0 +1,21 @@
+// Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
+// SPDX-License-Identifier: BSD-3-Clause
+
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define RENDER_TICK 10'000
+
+#define MOD_ENGINE_XY_DEAD_ZONE 20
+#define MOD_ENGINE_XY_MAX 510
+
+#define MOD_ENGINE_MAIN_PWM1 15
+#define MOD_ENGINE_MAIN_PWM2 14
+#define MOD_ENGINE_MAIN_ENABLE1 13
+#define MOD_ENGINE_MAIN_ENABLE2 12
+#define MOD_ENGINE_MAIN_ENABLE3 11
+#define MOD_ENGINE_MAIN_ENABLE4 10
+#define MOD_ENGINE_MAIN_DMA_CH1 2
+#define MOD_ENGINE_MAIN_DMA_CH2 3
+
+#endif //CONFIG_H

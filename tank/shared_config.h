@@ -11,7 +11,7 @@ typedef int32_t i32;
 typedef int16_t i16;
 typedef int8_t i8;
 
-#define DBG false
+#define DBG true
 
 // MCP
 /* MCP Layout (one byte) for controlled pins:

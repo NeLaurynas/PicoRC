@@ -17,7 +17,7 @@
 #include "utils.h"
 
 #include "defines/config.h"
-#include "modules/engine/turret_rotation.h"
+#include "modules/engine/turret_ctrl.h"
 
 #undef PICO_FLASH_ASSERT_ON_UNSAFE
 #define PICO_FLASH_ASSERT_ON_UNSAFE 0
@@ -25,7 +25,7 @@
 struct uni_platform* get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(48'000, false);
+	set_sys_clock_khz(18'000, false);
 
 	stdio_init_all();
 

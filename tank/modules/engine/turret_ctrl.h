@@ -5,7 +5,10 @@
 #define TURRET_ROTATION_H
 #include "shared_config.h"
 
-void turret_rotation_init();
-void turret_rotation_rotate(i16 val);
+void turret_ctrl_init();
+
+void turret_ctrl_rotate(i16 val);
+
+void turret_ctrl_lift(i16 val);
 
 #endif //TURRET_ROTATION_H

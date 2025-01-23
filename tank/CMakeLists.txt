@@ -27,10 +27,12 @@ add_executable(${PROJECT_NAME}
 		state.h
 		renderer.c
 		renderer.h
-		modules/engine/turret_rotation.c
-		modules/engine/turret_rotation.h
+		modules/engine/turret_ctrl.c
+		modules/engine/turret_ctrl.h
 		modules/engine/main_engine.c
 		modules/engine/main_engine.h
+		modules/leds/leds.c
+		modules/leds/leds.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

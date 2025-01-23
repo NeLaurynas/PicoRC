@@ -77,35 +77,7 @@ static void rc_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
 	switch (ctl->klass) {
 		case UNI_CONTROLLER_CLASS_GAMEPAD:
 			gp = &ctl->gamepad;
-
 			renderer_set_state(gp);
-
-			// if ((gp->buttons & BUTTON_A) && d->report_parser.play_dual_rumble != NULL) {
-			// 	logi("A");
-			// 	d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
-			// 	                                  128 /* weak magnitude */, 0 /* strong magnitude */);
-			// }
-			//
-			// if ((gp->buttons & BUTTON_B) && d->report_parser.play_dual_rumble != NULL) {
-			// 	logi("B");
-			// 	d->report_parser.play_dual_rumble(d, 0 /* delayed start ms */, 250 /* duration ms */,
-			// 	                                  0 /* weak magnitude */, 128 /* strong magnitude */);
-			// }
-			// if ((gp->buttons & BUTTON_X)) {
-			// 	logi("X");
-			// }
-			// if ((gp->buttons & BUTTON_Y)) {
-			// 	logi("Y");
-			// }
-			//
-			// if ((gp->buttons & BUTTON_SHOULDER_L)) {
-			// 	logi("BUTTON_SHOULDER_L");
-			// }
-			// if ((gp->buttons & BUTTON_SHOULDER_R)) {
-			// 	logi("BUTTON_SHOULDER_R");
-			// }
-			// logi("\nX: %d, Y: %d\n", gp->axis_x, gp->axis_y);
-			// logi("R - X: %d, Y: %d\n", gp->axis_rx, gp->axis_ry);
 			break;
 		default:
 			loge("Unsupported controller class: %d\n", ctl->klass);

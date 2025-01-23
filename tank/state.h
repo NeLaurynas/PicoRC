@@ -1,7 +1,7 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef STATE_Htypedef uint32_t u32;
+#ifndef STATE_H
 #define STATE_H
 
 #include <shared_config.h>
@@ -18,6 +18,9 @@ typedef struct {
 	bool btn_b;
 	bool btn_y;
 
+	bool btn_start;
+	bool btn_select;
+
 	bool shoulder_l;
 	bool shoulder_r;
 
@@ -33,10 +36,17 @@ typedef struct {
 	i16 ry;
 
 	bool btn_a;
-	bool btn_a_toggle;
 	bool btn_x;
 	bool btn_b;
 	bool btn_y;
+
+	bool btn_start;
+	bool btn_select;
+
+	bool white_leds;
+	bool red_led;
+
+	bool advanced_mode;
 
 	bool shoulder_l;
 	bool shoulder_r;

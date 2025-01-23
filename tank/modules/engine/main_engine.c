@@ -119,7 +119,7 @@ void main_engine_advanced(const i16 left, const i16 right) {
 	set_motor_ctrl(right, pwm_right, false);
 }
 
-void main_engine_basic(i16 gas, i16 steer) {
+void main_engine_basic(const i16 gas, const i16 steer) {
 	const bool go_left = steer < 0;
 	const bool go_forward = gas > 0;
 	const auto steer_perc = utils_scaled_pwm_percentage(steer, XY_DEAD_ZONE, XY_MAX);

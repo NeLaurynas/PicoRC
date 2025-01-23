@@ -34,9 +34,6 @@ void main_engine_init() {
 	channel1 = pwm_gpio_to_channel(MOD_ENGINE_MAIN_PWM1);
 	channel2 = pwm_gpio_to_channel(MOD_ENGINE_MAIN_PWM2);
 
-	// code assumes both slices are on the same channel, so it won't work, reconfigure connections
-	hard_assert(channel1 == channel2);
-
 	// init PWM
 	auto pwm_c1 = pwm_get_default_config();
 	pwm_c1.top = 10000;

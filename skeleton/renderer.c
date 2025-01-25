@@ -17,7 +17,7 @@ volatile static bool can_set_state = true;
 
 void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (!can_set_state) return;
-	// set every 10 ms?
+
 	if (state.btn_a != (gamepad->buttons & BUTTON_A)) state.btn_a = (gamepad->buttons & BUTTON_A);
 	if (state.btn_x != (gamepad->buttons & BUTTON_X)) state.btn_x = (gamepad->buttons & BUTTON_X);
 	if (state.btn_b != (gamepad->buttons & BUTTON_B)) state.btn_b = (gamepad->buttons & BUTTON_B);
@@ -31,7 +31,7 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 
 	if (state.rx != gamepad->axis_rx) {
 		state.rx = gamepad->axis_rx;
-		turret_rotation_rotate(state.rx);
+		// turret_rotation_rotate(state.rx);
 	}
 	if (state.ry != gamepad->axis_ry) state.ry = gamepad->axis_ry;
 

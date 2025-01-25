@@ -8,8 +8,8 @@
 #include <pico/cyw43_arch.h>
 
 #include "state.h"
-#include "utils.h"
 #include "shared_config.h"
+#include "utils.h"
 #include "defines/config.h"
 #include "modules/engine/turret_rotation.h"
 
@@ -17,7 +17,7 @@ volatile static bool can_set_state = true;
 
 void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (!can_set_state) return;
-	// set every 10 ms?
+
 	if (state.btn_a != (gamepad->buttons & BUTTON_A)) state.btn_a = (gamepad->buttons & BUTTON_A);
 	if (state.btn_x != (gamepad->buttons & BUTTON_X)) state.btn_x = (gamepad->buttons & BUTTON_X);
 	if (state.btn_b != (gamepad->buttons & BUTTON_B)) state.btn_b = (gamepad->buttons & BUTTON_B);
@@ -31,7 +31,7 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 
 	if (state.rx != gamepad->axis_rx) {
 		state.rx = gamepad->axis_rx;
-		turret_rotation_rotate(state.rx);
+		// turret_rotation_rotate(state.rx);
 	}
 	if (state.ry != gamepad->axis_ry) state.ry = gamepad->axis_ry;
 
@@ -41,7 +41,7 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 static void render_state() {
 	// get early
 	if (current_state.btn_a != state.btn_a) {
-		if (state.btn_a) {
+		if (state.btn_a == true) {
 			utils_printf("!!!! pressed btn A\n");
 		}
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed

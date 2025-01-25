@@ -57,6 +57,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb
+		-ffunction-sections
+		-fdata-sections
 		>
 
 		$<$<CONFIG:Release>:
@@ -72,6 +74,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb
+		-ffunction-sections
+		-fdata-sections
 		>
 )
 
@@ -88,6 +92,7 @@ target_link_options(${PROJECT_NAME} PRIVATE
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb
+		-Wl,--gc-sections
 )
 
 # Generate PIO headers

@@ -47,12 +47,12 @@ get_target_property(PICO_STD_INCLUDE pico_stdlib INTERFACE_INCLUDE_DIRECTORIES)
 
 target_compile_options(${PROJECT_NAME} PRIVATE
 		$<$<CONFIG:Debug>:
-		-Og
-		-g
+		-Og # disable if you get <optimized out>
+		-g3
 		-Wall
 		-Wextra
 		-Winline
-#		-Werror
+		#		-Werror
 		-Wno-error=old-style-declaration
 		-march=armv8-m.main
 		-mtune=cortex-m33
@@ -60,6 +60,8 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-mthumb
 		-ffunction-sections
 		-fdata-sections
+		-fsanitize=undefined,bounds,float-divide-by-zero
+		-fsanitize-trap=undefined,bounds,float-divide-by-zero
 		>
 
 		$<$<CONFIG:Release>:

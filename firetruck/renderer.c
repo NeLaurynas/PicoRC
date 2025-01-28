@@ -44,7 +44,7 @@ static void render_state() {
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a == true) {
 			utils_printf("!!!! pressed btn A\n");
-			state.sound.anim = SOUND_LOOP;
+			// state.sound.anim = SOUND_LOOP;
 		}
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
 		// toggle?

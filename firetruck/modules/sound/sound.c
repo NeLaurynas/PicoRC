@@ -1,188 +1,297 @@
-// Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
-// SPDX-License-Identifier: BSD-3-Clause
+/*
+ * Example of Ping-Pong DMA for 9-bit PWM audio at ~22 kHz from an MP3 (minimp3).
+ *
+ * Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
+ * SPDX-License-Identifier: BSD-3-Clause
+ */
 
 #include <stdio.h>
 #include <string.h>
-#include <hardware/dma.h>
-#include <hardware/irq.h>
-#include <hardware/pwm.h>
-#include <pico/stdlib.h>
-#include <hardware/clocks.h>
+#include "pico/stdlib.h"
+#include "hardware/pwm.h"
+#include "hardware/dma.h"
+#include "hardware/irq.h"
+#include "hardware/sync.h"
 
-#define MINIMP3_ONLY_MP3
+#define MINIMP3_NONSTANDARD_BUT_LOGICAL
 #define MINIMP3_IMPLEMENTATION
 #include "minimp3.h"
-#include "state.h"
 
-#include "utils.h"
-#include "data/firetruck_siren.h"
+// The MP3 data you want to play (22 kHz, ~80 kbps)
+#include "data/firetruck_siren.h"  // defines firetruck_siren_loop_all_mp3[] and firetruck_siren_loop_all_mp3_len
 #include "defines/config.h"
 
-#define AUDIO_SAMPLE_RATE   22050U       // ~22 kHz
+//--------------------------------------------------------------------------------------
+// Public interface (per your request)
+//--------------------------------------------------------------------------------------
+void sound_init(void);
+void sound_play(void);
+
+static void __isr dma_irq0_handler(void);
+static uint32_t decode_next_chunk_into(uint16_t *out_buf, uint32_t max_samples);
+
+//--------------------------------------------------------------------------------------
+// Configurable parameters
+//--------------------------------------------------------------------------------------
+#define AUDIO_SAMPLE_RATE    22000      // ~22 kHz
 #define AUDIO_BITS           9          // 9-bit PWM => 0..511
-#define PWM_WRAP             ((1 << AUDIO_BITS) - 1)
-// PCM_BUFFER_SIZE should be big enough to make DMA busy before next animation tick (10 ms, could be more - x2 works, x3 to be safe)
-#define PCM_BUFFER_SIZE         (1152*3)
-// MP3_BUFFER_SIZE should be big enough for MP3 data to fill PCM_BUFFER_SIZE
-#define MP3_BUFFER_SIZE         (610*3)
+#define PWM_WRAP             ((1 << AUDIO_BITS) - 1) // 511
 
-typedef struct {
-	u16 buffer[PCM_BUFFER_SIZE];
-	bool done;
-	u32 sample_size;
-} dma_buffer_t;
+// Max decoded samples per frame. For MP3 layer3, 1152 stereo => 2304. We allow a bit extra.
+#define MAX_SAMPLES_PER_FRAME  2304
 
-static dma_buffer_t dma_buffer1 = { 0 };
-static dma_buffer_t dma_buffer2 = { 0 };
+// We'll do ping-pong with two buffers; each buffer can hold up to MAX_SAMPLES_PER_FRAME
+static uint16_t dma_buffer[2][MAX_SAMPLES_PER_FRAME];
 
-static mp3d_sample_t pcm_buffer[PCM_BUFFER_SIZE] = { 0 };
-static u8 mp3_buffer[MP3_BUFFER_SIZE] = { 0 };
+// We'll read the MP3 in lumps
+#define MP3_CHUNK_SIZE        1152
 
-static mp3dec_t mp3d;
-static u8 slice;
-static u8 channel;
+//--------------------------------------------------------------------------------------
+// Globals
+//--------------------------------------------------------------------------------------
+static mp3dec_t    mp3d;
+static uint32_t    mp3_read_offset = 0;
 
-static const u16 *dma_source_ptr = nullptr;
-static u32 dma_sample_count = 0;
+static uint8_t     mp3_chunk_buf[MP3_CHUNK_SIZE];
+static short       pcm[MAX_SAMPLES_PER_FRAME];  // 16-bit signed PCM decode buffer
 
-static void dma_start(const dma_buffer_t *buffer) {
-	dma_source_ptr = buffer->buffer;
-	dma_sample_count = buffer->sample_size;
+// Two DMA channels for ping-pong
+static int dma_chan[2] = {-1, -1};
 
-	dma_channel_transfer_from_buffer_now(MOD_SOUND_DMA_CH, dma_source_ptr, dma_sample_count);
+// For referencing the PWM slice/channel we are driving
+static uint  pwm_slice;
+static uint  pwm_chan;  // 0 for A, 1 for B
+
+// Track how many samples are in each ping/pong buffer
+static uint  samples_in_buffer[2] = {0, 0};
+
+// For “which buffer is currently being prepared in the code”
+static uint  current_buffer_index = 0;
+
+static volatile bool dma_in_use[2] = { false, false }; // which channel is playing?
+
+static void pwm_audio_init(uint gpio)
+{
+    // Set the pin function to PWM
+    gpio_set_function(gpio, GPIO_FUNC_PWM);
+
+    // Figure out which slice/channel this GPIO is on
+    pwm_slice = pwm_gpio_to_slice_num(gpio);
+    pwm_chan  = pwm_gpio_to_channel(gpio);
+
+    // Default config
+    pwm_config config = pwm_get_default_config();
+    pwm_config_set_wrap(&config, PWM_WRAP);
+
+    const float sys_clk_hz = 18000000.0f;
+    float divider = sys_clk_hz / ((float)AUDIO_SAMPLE_RATE * (PWM_WRAP + 1));
+    pwm_config_set_clkdiv(&config, divider);
+
+    // Initialize & enable
+    pwm_init(pwm_slice, &config, false);
+    pwm_set_chan_level(pwm_slice, pwm_chan, 0);
+    pwm_set_enabled(pwm_slice, true);
 }
 
-static void dma_irq_handler(void) {
-	dma_hw->ints0 = 1u << MOD_SOUND_DMA_CH; // clear interrupt
-
-	const u16 *finished_buffer = dma_source_ptr;
-
-	if (finished_buffer == dma_buffer1.buffer) {
-		dma_buffer1.done = true;
-		// launch second buffer eh
-		if (!dma_buffer2.done) dma_start(&dma_buffer2);
-	} else if (finished_buffer == dma_buffer2.buffer) {
-		dma_buffer2.done = true;
-		if (!dma_buffer1.done) dma_start(&dma_buffer1);
-	}
+static volatile uint16_t * get_slice_cc_ptr(uint slice, uint chan)
+{
+    // Each slice has a single 32-bit CC register: lower 16 bits for channel A, upper 16 for B.
+    volatile uint32_t *cc_reg_32 = &pwm_hw->slice[slice].cc;
+    // Now treat that as a 16-bit pointer:
+    volatile uint16_t *cc_reg_16 = (volatile uint16_t *)cc_reg_32;
+    if (chan == PWM_CHAN_B) {
+        cc_reg_16++;  // move to upper half
+    }
+    return cc_reg_16;
 }
 
-void sound_init(void) {
-	// MP3 decoder
-	mp3dec_init(&mp3d);
+static void setup_ping_pong_dma(void)
+{
+    // Claim two DMA channels
+    dma_chan[0] = dma_claim_unused_channel(true);
+    dma_chan[1] = dma_claim_unused_channel(true);
 
-	// PWM
-	gpio_set_function(MOD_SOUND_PIN, GPIO_FUNC_PWM);
-	slice = pwm_gpio_to_slice_num(MOD_SOUND_PIN);
-	channel = pwm_gpio_to_channel(MOD_SOUND_PIN);
-	pwm_config config = pwm_get_default_config();
-	pwm_config_set_wrap(&config, PWM_WRAP);
+    // The 16-bit pointer to the relevant channel (A or B) of the PWM slice
+    volatile uint16_t *pwm_compare_16 = get_slice_cc_ptr(pwm_slice, pwm_chan);
 
-	const float sys_clk_hz = 18000000.0f;
-	float divider = sys_clk_hz / ((float)AUDIO_SAMPLE_RATE * (PWM_WRAP + 1));
-	pwm_config_set_clkdiv(&config, divider);
-	// float clk_div = 100.f;
-	utils_printf("SOUND PWM CLK DIV: %f\n", divider);
-	pwm_config_set_clkdiv(&config, divider);
+    // Configure channel 0
+    {
+        dma_channel_config c0 = dma_channel_get_default_config(dma_chan[0]);
+        channel_config_set_transfer_data_size(&c0, DMA_SIZE_16); // 16-bit
+        channel_config_set_read_increment(&c0, true);            // read from buffer increments
+        channel_config_set_write_increment(&c0, false);          // always write to same register
+        // pace by PWM slice (once per PWM cycle)
+        channel_config_set_dreq(&c0, DREQ_PWM_WRAP0 + pwm_slice);
 
-	pwm_init(slice, &config, false);
-	pwm_set_chan_level(slice, channel, 0);
-	pwm_set_enabled(slice, true);
+        // **Important**: chain channel 0 -> channel 1
+        channel_config_set_chain_to(&c0, dma_chan[1]);
 
-	// DMA
-	if (dma_channel_is_claimed(MOD_SOUND_DMA_CH)) utils_error_mode(41);
-	dma_channel_claim(MOD_SOUND_DMA_CH);
+        // We'll initially configure it with 0 transfers; we'll set actual read address + count
+        // when we actually start playing.
+        dma_channel_configure(
+            dma_chan[0],
+            &c0,
+            pwm_compare_16,      // write address
+            NULL,                // read address (will set later)
+            0,                   // number of transfers (will set later)
+            false                // don't start yet
+        );
+    }
 
-	dma_channel_config dma_c = dma_channel_get_default_config(MOD_SOUND_DMA_CH);
-	channel_config_set_transfer_data_size(&dma_c, DMA_SIZE_16);
-	channel_config_set_read_increment(&dma_c, true);
-	channel_config_set_write_increment(&dma_c, false);
-	channel_config_set_dreq(&dma_c, (DREQ_PWM_WRAP0 + slice));
+    // Configure channel 1
+    {
+        dma_channel_config c1 = dma_channel_get_default_config(dma_chan[1]);
+        channel_config_set_transfer_data_size(&c1, DMA_SIZE_16);
+        channel_config_set_read_increment(&c1, true);
+        channel_config_set_write_increment(&c1, false);
+        channel_config_set_dreq(&c1, DREQ_PWM_WRAP0 + pwm_slice);
 
-	uint16_t *cc_register_for_16bits = (uint16_t *)&pwm_hw->slice[slice].cc + channel;
-	dma_channel_configure(MOD_SOUND_DMA_CH, &dma_c, cc_register_for_16bits, nullptr, 0, false);
+        // chain channel 1 -> channel 0
+        channel_config_set_chain_to(&c1, dma_chan[0]);
 
-	dma_channel_set_irq0_enabled(MOD_SOUND_DMA_CH, true); // irq0 for 0..3 channels, so sound channel...
-	irq_set_exclusive_handler(DMA_IRQ_0, dma_irq_handler);
-	irq_set_enabled(DMA_IRQ_0, true);
+        dma_channel_configure(
+            dma_chan[1],
+            &c1,
+            pwm_compare_16,      // always write to same compare reg
+            NULL,                // read address (to set later)
+            0,                   // count (to set later)
+            false
+        );
+    }
 
-	state.sound.anim = SOUND_LOOP; // debug
+    dma_channel_set_irq0_enabled(dma_chan[0], true);
+    dma_channel_set_irq0_enabled(dma_chan[1], true);
+
+    irq_set_exclusive_handler(DMA_IRQ_0, dma_irq0_handler);
+    irq_set_enabled(DMA_IRQ_0, true);
 }
 
-static void load_dma_buffer(const bool first_buffer, u32 *offset) {
-	dma_buffer_t *buffer = first_buffer ? &dma_buffer1 : &dma_buffer2;
-	u16 samples = 0;
-	buffer->sample_size = 0;
-	mp3dec_frame_info_t info = { 0 };
-	u32 local_offset = 0;
+static void __isr dma_irq0_handler(void)
+{
+    // Check if channel 0 triggered the IRQ
+    if (dma_hw->ints0 & (1u << dma_chan[0])) {
+        // Clear the interrupt
+        dma_hw->ints0 = (1u << dma_chan[0]);
+        dma_in_use[0] = false;
 
-	u32 mp3_chunk_size = (*offset + MP3_BUFFER_SIZE <= firetruck_siren_loop_all_mp3_len)
-		? MP3_BUFFER_SIZE
-		: (firetruck_siren_loop_all_mp3_len - *offset);
-	memcpy(mp3_buffer, &firetruck_siren_loop_all_mp3[*offset], mp3_chunk_size);
+        // We just finished playing buffer 0, so decode next chunk into buffer[0]
+        // unless we're done with MP3
+        if (mp3_read_offset < firetruck_siren_loop_all_mp3_len) {
+            // fill buffer 0
+            samples_in_buffer[0] = decode_next_chunk_into(dma_buffer[0], MAX_SAMPLES_PER_FRAME);
+            // reconfigure channel 0 with the new read address + length
+            dma_channel_set_read_addr(dma_chan[0], dma_buffer[0], false);
+            dma_channel_set_trans_count(dma_chan[0], samples_in_buffer[0], false);
+        }
+        else {
+            // No more MP3 data => set length=0 => silent
+            dma_channel_set_read_addr(dma_chan[0], dma_buffer[0], false);
+            dma_channel_set_trans_count(dma_chan[0], 0, false);
+        }
+    }
 
-	while (*offset < firetruck_siren_loop_all_mp3_len && buffer->sample_size + samples <= PCM_BUFFER_SIZE && mp3_chunk_size > 0) {
-		samples = mp3dec_decode_frame(&mp3d, &mp3_buffer[local_offset], (i32)mp3_chunk_size, &pcm_buffer[buffer->sample_size], &info);
- 		if (samples > 0 && info.frame_bytes > 0) {
-			// utils_printf("OK!\n");
-		} else if (samples == 0 && info.frame_bytes > 0) {
-			utils_printf("Skipped ID3 or invalid data\n");
-			break;
-		} else if (samples == 0 && info.frame_bytes == 0) {
-			break;
-			utils_printf("Insufficient data\n");
-		}
-		buffer->sample_size += samples;
-		*offset += info.frame_bytes;
-		local_offset += info.frame_bytes;
-		mp3_chunk_size -= info.frame_bytes;
-	}
+    // Check if channel 1 triggered the IRQ
+    if (dma_hw->ints0 & (1u << dma_chan[1])) {
+        dma_hw->ints0 = (1u << dma_chan[1]);
+        dma_in_use[1] = false;
 
-	for (int i = 0; i < samples; i++) {
-		const i16 raw_sample = pcm_buffer[i]; // -32768..32767
-		const u32 shifted = raw_sample + 32768u; // 0..65535
-		const u16 pwm_value = (uint16_t)(shifted >> 7); // 0..511 for 9-bit
-		buffer->buffer[i] = pwm_value;
-	}
-
-	buffer->done = false;
+        // Just finished playing buffer[1], so decode next chunk
+        if (mp3_read_offset < firetruck_siren_loop_all_mp3_len) {
+            samples_in_buffer[1] = decode_next_chunk_into(dma_buffer[1], MAX_SAMPLES_PER_FRAME);
+            dma_channel_set_read_addr(dma_chan[1], dma_buffer[1], false);
+            dma_channel_set_trans_count(dma_chan[1], samples_in_buffer[1], false);
+        }
+        else {
+            dma_channel_set_read_addr(dma_chan[1], dma_buffer[1], false);
+            dma_channel_set_trans_count(dma_chan[1], 0, false);
+        }
+    }
 }
 
-// so this keeps buffers topped up, irq handler launches another buffer then...
-static void anim_loop() {
-	static bool init = false;
-	static bool no_more_buffer = true;
-	static bool first_run = true;
-	static u32 offset = 0;
+static uint32_t decode_next_chunk_into(uint16_t *out_buf, uint32_t max_samples)
+{
+    // 1) Copy up to MP3_CHUNK_SIZE from the big MP3 array
+    uint32_t chunk_size = (mp3_read_offset + MP3_CHUNK_SIZE <= firetruck_siren_loop_all_mp3_len)
+                            ? MP3_CHUNK_SIZE
+                            : (firetruck_siren_loop_all_mp3_len - mp3_read_offset);
 
-	if (!init) {
-		init = true;
-		no_more_buffer = false;
-		first_run = true;
-		offset = 0;
-		dma_buffer1.done = true;
-		dma_buffer2.done = true;
-	} else if (offset >= firetruck_siren_loop_all_mp3_len) {
-		// if (no_more_buffer) // TODO: set no more buffer
-		// init = false;
-		// state.sound.anim = SOUND_OFF; // todo: other buffer might be available?
-		// utils_printf("sound off!\n");
-		// pwm_set_gpio_level(MOD_SOUND_DMA_CH, 0); //todo
-		return;
-	}
+    memcpy(mp3_chunk_buf, &firetruck_siren_loop_all_mp3[mp3_read_offset], chunk_size);
 
-	if (dma_buffer1.done) load_dma_buffer(true, &offset);
-	if (dma_buffer2.done) load_dma_buffer(false, &offset);
+    // 2) Decode
+    mp3dec_frame_info_t info;
+    int samples = mp3dec_decode_frame(&mp3d, mp3_chunk_buf, chunk_size, pcm, &info);
 
-	if (first_run) {
-		first_run = false;
-		utils_printf("go\n");
-		dma_start(&dma_buffer1);
-	}
+    // Advance offset by the bytes consumed
+    mp3_read_offset += info.frame_bytes;
+
+    if (samples <= 0 || info.frame_bytes <= 0) {
+        // No valid samples => return 0 => silence
+        return 0;
+    }
+
+    // minimp3 returns 16-bit signed => scale to 9-bit
+    if ((uint32_t)samples > max_samples) {
+        samples = max_samples; // clamp
+    }
+
+    for (int i = 0; i < samples; i++) {
+        int16_t raw_sample  = pcm[i];           // -32768..32767
+        uint32_t shifted    = raw_sample + 32768u;  // 0..65535
+        uint16_t pwm_value  = (uint16_t)(shifted >> 7); // 0..511 for 9-bit
+        out_buf[i]          = pwm_value;
+    }
+
+    return samples;
+}
+
+void sound_init(void)
+{
+    // Initialize MP3 decoder
+    mp3dec_init(&mp3d);
+    mp3_read_offset = 0;
+
+    // Initialize the PWM on GPIO 15 (example). Adjust as needed.
+    pwm_audio_init(MOD_SOUND_PIN);
+
+    // Setup two channels in ping-pong
+    setup_ping_pong_dma();
+
+	sound_play();
+}
+
+void sound_play(void)
+{
+    samples_in_buffer[0] = decode_next_chunk_into(dma_buffer[0], MAX_SAMPLES_PER_FRAME);
+    samples_in_buffer[1] = decode_next_chunk_into(dma_buffer[1], MAX_SAMPLES_PER_FRAME);
+
+    dma_channel_set_read_addr(dma_chan[0], dma_buffer[0], false);
+    dma_channel_set_trans_count(dma_chan[0], samples_in_buffer[0], false);
+
+    dma_channel_set_read_addr(dma_chan[1], dma_buffer[1], false);
+    dma_channel_set_trans_count(dma_chan[1], samples_in_buffer[1], false);
+
+    // Mark them in_use if they have >0 samples
+    dma_in_use[0] = (samples_in_buffer[0] > 0);
+    dma_in_use[1] = (samples_in_buffer[1] > 0);
+
+    dma_start_channel_mask((1u << dma_chan[0]));
+
+    // Optionally, just return. The main loop continues; the DMA IRQ refills buffers.
+    // If you want to block until done, do something like:
+    while (mp3_read_offset < firetruck_siren_loop_all_mp3_len) {
+        // We still have MP3 data left
+        tight_loop_contents(); // do any other tasks
+    }
+
+    bool still_playing = true;
+    while (still_playing) {
+        still_playing = dma_in_use[0] || dma_in_use[1];
+        tight_loop_contents();
+    }
+
+    // Optionally set PWM compare to 0 or a neutral level
+    pwm_set_chan_level(pwm_slice, pwm_chan, 0);
 }
 
 void sound_animation() {
-	if (state.sound.anim & SOUND_LOOP) {
-		anim_loop();
-	}
 }

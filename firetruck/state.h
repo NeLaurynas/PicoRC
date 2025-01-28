@@ -6,6 +6,20 @@
 
 #include <shared_config.h>
 
+// ENUMS
+/* FLAGS:
+ * check if set - sound & SOUND_HORN
+ * set - sound = SOUND_HORN | SOUND_LOOP
+ * remove flag - sound &= ~SOUND_HORN
+ * toggle flag - sound ^= SOUND_HORN
+ * only flag - sound == SOUND_LOOP
+ */
+typedef enum {
+	SOUND_OFF = 0,
+	SOUND_HORN = 1 << 0,
+	SOUND_LOOP = 1 << 1
+} sound_anim_t;
+
 typedef struct {
 	i16 x;
 	i16 y;
@@ -23,6 +37,10 @@ typedef struct {
 
 	u16 throttle;
 	u16 brake;
+
+	struct {
+		sound_anim_t anim;
+	} sound;
 } State;
 
 typedef struct {

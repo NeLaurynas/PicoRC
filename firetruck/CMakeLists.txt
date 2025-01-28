@@ -32,6 +32,8 @@ add_executable(${PROJECT_NAME}
 		modules/engine/main_engine.c
 		modules/engine/main_engine.h
 		data/firetruck_siren.h
+		modules/sound/sound.c
+		modules/sound/sound.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -39,6 +41,12 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 		${BLUEPAD32_ROOT}/src/components/bluepad32/include
 		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
 )
+
+# pico-shared
+add_subdirectory(../lib/pico-shared ${CMAKE_BINARY_DIR}/pico-shared)
+target_link_libraries(${PROJECT_NAME} pico-shared)
+# minimp3
+include_directories(${CMAKE_SOURCE_DIR}/../lib/minimp3)
 
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} "0.1")
@@ -60,8 +68,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-mthumb
 		-ffunction-sections
 		-fdata-sections
-		-fsanitize=undefined,bounds,float-divide-by-zero
-		-fsanitize-trap=undefined,bounds,float-divide-by-zero
 		>
 
 		$<$<CONFIG:Release>:
@@ -97,6 +103,7 @@ target_link_options(${PROJECT_NAME} PRIVATE
 		-mthumb
 		-Wl,--gc-sections
 )
+target_link_options(${PROJECT_NAME} PRIVATE -static-libubsan)
 
 # Generate PIO headers
 #pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/modules/numbers/pio_numbers.pio)
@@ -116,9 +123,6 @@ include_directories(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR})
 include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/encoder/include)
 include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/decoder/include)
 include_directories(${BTSTACK_ROOT}/src)
-
-add_subdirectory(../lib/pico-shared ${CMAKE_BINARY_DIR}/pico-shared)
-target_link_libraries(${PROJECT_NAME} pico-shared)
 
 target_link_libraries(${PROJECT_NAME}
 		pico_stdlib)

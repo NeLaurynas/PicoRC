@@ -12,6 +12,7 @@
 #include "utils.h"
 #include "defines/config.h"
 #include "modules/engine/turret_rotation.h"
+#include "modules/sound/sound.h"
 
 volatile static bool can_set_state = true;
 
@@ -43,6 +44,7 @@ static void render_state() {
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a == true) {
 			utils_printf("!!!! pressed btn A\n");
+			state.sound.anim = SOUND_LOOP;
 		}
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
 		// toggle?
@@ -51,13 +53,19 @@ static void render_state() {
 }
 
 static void init() {
-	turret_rotation_init();
+	// turret_rotation_init();
+	sound_init();
+	// soundtwo_init();
+	// soundtwo_play();
 }
 
 void renderer_loop() {
 #if DBG
 	static int64_t acc_elapsed_us = 0;
 #endif
+
+	const void (*animation_functions[])() = { sound_animation };
+	constexpr u8 anim_fn_size = ARRAY_SIZE(animation_functions);
 
 	init();
 
@@ -67,6 +75,7 @@ void renderer_loop() {
 		const auto start = time_us_32();
 
 		render_state();
+		for (u8 i = 0; i < anim_fn_size; i++) animation_functions[i]();
 
 		auto end = time_us_32();
 		auto elapsed_us = utils_time_diff_us(start, end);

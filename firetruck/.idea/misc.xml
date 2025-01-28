@@ -4,6 +4,7 @@
   <component name="CidrRootsConfiguration">
     <libraryRoots>
       <file path="$PROJECT_DIR$/../lib/bluepad32/src/components/bluepad32" />
+      <file path="$PROJECT_DIR$/../lib/pico-shared" />
       <file path="/usr/share/pico-sdk" />
     </libraryRoots>
   </component>

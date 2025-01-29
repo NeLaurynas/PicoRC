@@ -19,9 +19,6 @@
 #include "utils.h"
 #include "modules/engine/turret_rotation.h"
 
-#undef PICO_FLASH_ASSERT_ON_UNSAFE
-#define PICO_FLASH_ASSERT_ON_UNSAFE 0
-
 struct uni_platform* get_rc_platform(void);
 
 int main() {

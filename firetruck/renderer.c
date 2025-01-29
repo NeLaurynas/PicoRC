@@ -3,16 +3,16 @@
 
 #include "renderer.h"
 
-#include <stdlib.h>
 #include <hardware/timer.h>
 #include <pico/cyw43_arch.h>
+#include <stdlib.h>
 
-#include "state.h"
-#include "shared_config.h"
-#include "utils.h"
 #include "defines/config.h"
 #include "modules/engine/turret_rotation.h"
 #include "modules/sound/sound.h"
+#include "shared_config.h"
+#include "state.h"
+#include "utils.h"
 
 volatile static bool can_set_state = true;
 
@@ -43,7 +43,7 @@ static void render_state() {
 	// get early
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a == true) {
-			utils_printf("!!!! pressed btn A\n");
+			utils_printf("!! pressed btn A\n");
 			// state.sound.anim = SOUND_LOOP;
 		}
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed

@@ -12,6 +12,8 @@ set(PICO_BOARD pico2_w CACHE STRING "Board type")
 set(BLUEPAD32_ROOT ${CMAKE_CURRENT_SOURCE_DIR}/../lib/bluepad32)
 set(BTSTACK_ROOT ${PICO_SDK_PATH}/lib/btstack)
 
+add_compile_definitions(PICO_FLASH_ASSERT_ON_UNSAFE=0)
+
 include(pico_sdk_import.cmake)
 
 project(${PROJECT_NAME} C CXX ASM)
@@ -53,7 +55,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-Wall
 		-Wextra
 		-Winline
-#		-Werror
+		#		-Werror
 		-Wno-error=old-style-declaration
 		-march=armv8-m.main
 		-mtune=cortex-m33
@@ -96,15 +98,15 @@ target_link_options(${PROJECT_NAME} PRIVATE
 #pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/modules/numbers/pio_numbers.pio)
 
 # Modify the below lines to enable/disable output over UART/USB
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	pico_enable_stdio_uart(${PROJECT_NAME} 1)
 	pico_enable_stdio_usb(${PROJECT_NAME} 0)
-elseif(CMAKE_BUILD_TYPE STREQUAL "Release")
+elseif (CMAKE_BUILD_TYPE STREQUAL "Release")
 	pico_enable_stdio_uart(${PROJECT_NAME} 0)
 	pico_enable_stdio_usb(${PROJECT_NAME} 1)
-else()
+else ()
 	message(WARNING "Unhandled build type: ${CMAKE_BUILD_TYPE}")
-endif()
+endif ()
 
 include_directories(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR})
 include_directories(${BTSTACK_ROOT}/3rd-party/bluedroid/encoder/include)
@@ -118,7 +120,7 @@ target_link_libraries(${PROJECT_NAME}
 		pico_stdlib)
 
 target_link_libraries(${PROJECT_NAME}
-#		hardware_i2c
+		#		hardware_i2c
 		pico_cyw43_arch_none
 		pico_btstack_classic
 		pico_btstack_cyw43
@@ -126,10 +128,10 @@ target_link_libraries(${PROJECT_NAME}
 		hardware_clocks
 		hardware_pio
 		pico_multicore
-#		hardware_adc
+		#		hardware_adc
 		hardware_dma
 		hardware_pwm
-#		pico_rand
+		#		pico_rand
 		$<$<CONFIG:Debug>:hardware_uart>
 )
 
@@ -137,18 +139,18 @@ add_subdirectory(${BLUEPAD32_ROOT}/src/components/bluepad32 libbluepad32)
 
 pico_add_extra_outputs(${PROJECT_NAME})
 
-if(CMAKE_BUILD_TYPE STREQUAL "Release")
+if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	add_custom_command(
 			TARGET ${PROJECT_NAME}
 			POST_BUILD
-			COMMAND /usr/bin/picotool load -f ${PROJECT_NAME}.uf2
+			COMMAND /opt/homebrew/bin/picotool load -f ${PROJECT_NAME}.uf2
 	)
 endif ()
 
-if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_custom_command(
 			TARGET ${PROJECT_NAME}
 			POST_BUILD
-			COMMAND /usr/bin/openocd  -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000" -c "program ${PROJECT_NAME}.elf verify reset exit"
+			COMMAND /usr/local/bin/openocd -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000" -c "program ${PROJECT_NAME}.elf verify reset exit"
 	)
 endif ()

@@ -43,8 +43,7 @@ static void render_state() {
 	// get early
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a == true) {
-			utils_printf("!! pressed btn A\n");
-			// state.sound.anim = SOUND_LOOP;
+			state.sound.anim = SOUND_LOOP;
 		}
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
 		// toggle?
@@ -55,8 +54,6 @@ static void render_state() {
 static void init() {
 	// turret_rotation_init();
 	sound_init();
-	// soundtwo_init();
-	// soundtwo_play();
 }
 
 void renderer_loop() {
@@ -73,6 +70,7 @@ void renderer_loop() {
 	for (;;) {
 		can_set_state = true;
 		const auto start = time_us_32();
+		utils_printf(".");
 
 		render_state();
 		for (u8 i = 0; i < anim_fn_size; i++) animation_functions[i]();

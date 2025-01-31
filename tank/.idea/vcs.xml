@@ -5,5 +5,10 @@
     <mapping directory="$PROJECT_DIR$/../lib/bluepad32" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../lib/pico-shared" vcs="Git" />
     <mapping directory="$PROJECT_DIR$/../../official/pico-sdk" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../official/pico-sdk/lib/btstack" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../official/pico-sdk/lib/cyw43-driver" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../official/pico-sdk/lib/lwip" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../official/pico-sdk/lib/mbedtls" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/../../official/pico-sdk/lib/tinyusb" vcs="Git" />
   </component>
 </project>

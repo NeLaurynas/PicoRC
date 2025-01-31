@@ -55,10 +55,6 @@ static void init() {
 }
 
 void renderer_loop() {
-#if DBG
-	static int64_t acc_elapsed_us = 0;
-#endif
-
 	init();
 
 	// ReSharper disable once CppDFAEndlessLoop
@@ -68,37 +64,9 @@ void renderer_loop() {
 
 		render_state();
 
-		auto end = time_us_32();
-		auto elapsed_us = utils_time_diff_us(start, end);
-		auto remaining_us = RENDER_TICK - elapsed_us;
+		const auto elapsed_us = utils_time_diff_us(start, time_us_32());
+		const auto remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;
 
-#if DBG
-		acc_elapsed_us += (remaining_us + elapsed_us);
-
-		if (acc_elapsed_us >= 10 * 1'000'000) { // 10 seconds
-			const float elapsed_ms = elapsed_us / 1000.0f;
-			utils_printf("render took: %.2f ms (%ld us)\n", elapsed_ms, elapsed_us);
-			// utils_print_onboard_temp();
-
-			size_t allocated = 300 * 1024;
-			// so 480 kb is free for sure
-			// char *ptr = malloc(allocated);
-			// if (ptr != NULL) { // seems to panic and not return null
-			// 	printf("Successfully allocated: %zu KB\n", allocated / 1024);
-			// } else {
-			// 	printf("Failed to allocate %zu KB\n", allocated / 1024);
-			// 	break;
-			// }
-			// free(ptr);
-			// printf("Free'd: %zu KB\n", allocated / 1024);
-
-			acc_elapsed_us = 0;
-			// recalculate because printf is slow
-			end = time_us_32();
-			elapsed_us = utils_time_diff_us(start, end);
-			remaining_us = RENDER_TICK - elapsed_us;
-		}
-#endif
 		// utils_printf("x\n");
 		if (remaining_us > 0) sleep_us(remaining_us);
 	}

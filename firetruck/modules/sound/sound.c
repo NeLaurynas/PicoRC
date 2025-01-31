@@ -20,26 +20,23 @@
 #define PWM_WRAP             ((1 << AUDIO_BITS) - 1) // 511
 
 /* increase multiplier on both
- *	buffer size should be big enough to not run out of data, causes stall (then sound is gone:
- *		buffers are primed but not in use, so logic doesn't load new data or launch
- *		dma channel and anim_loop doesn't go to off - TODO - fix? but this is like assert - clearly tells problem has been raised)
+ *	buffer size should be big enough to not run out of data, causing a stall
  *	also should not be too big, because decoding data can also cause stall?
- *	fails at 18 mhz ant 25 mhz kek
  */
-#define DECODED_BUFF_SIZE	(1152*4)
-#define MP3_BUFF_SIZE		(610*4)
+#define DECODED_BUFF_SIZE	(1152*3)
+#define MP3_BUFF_SIZE		(610*3)
 
 typedef struct {
-	volatile u16 data[DECODED_BUFF_SIZE];
-	volatile bool in_use;
-	volatile bool primed;
-	volatile u16 size;
+	u16 data[DECODED_BUFF_SIZE];
+	bool in_use;
+	bool primed;
+	u16 size;
 } dma_buffer_t;
 
-volatile static dma_buffer_t dma_buffer1 = { 0 };
-volatile static dma_buffer_t dma_buffer2 = { 0 };
-volatile static mp3d_sample_t pcm_buffer[DECODED_BUFF_SIZE] = { 0 };
-volatile static u8 mp3_buffer[MP3_BUFF_SIZE] = { 0 };
+static dma_buffer_t dma_buffer1 = { 0 };
+static dma_buffer_t dma_buffer2 = { 0 };
+static mp3d_sample_t pcm_buffer[DECODED_BUFF_SIZE] = { 0 };
+static u8 mp3_buffer[MP3_BUFF_SIZE] = { 0 };
 
 static mp3dec_t mp3d;
 static u8 slice;
@@ -51,9 +48,8 @@ static void get_dma_running() {
 	dma_channel_transfer_from_buffer_now(MOD_SOUND_DMA_CH1, dma_buffer1.data, dma_buffer1.size);
 }
 
-static void decode_mp3_into_dma_buffer(volatile dma_buffer_t *dma_buffer, const u8 *mp3_data, u32 *mp3_offset, const u32 mp3_len) {
+static void decode_mp3_into_dma_buffer(dma_buffer_t *dma_buffer, const char *mp3_data, u32 *mp3_offset, const u32 mp3_len) {
 	assert(dma_buffer->in_use == false);
-	const u8 first = dma_buffer == &dma_buffer1 ? 1 : 2;
 
 	i32 chunk_size = (*mp3_offset + MP3_BUFF_SIZE <= mp3_len)
 		? MP3_BUFF_SIZE
@@ -132,15 +128,25 @@ static void anim_loop() {
 		if (!dma_buffer1.in_use && !dma_buffer2.in_use) {
 			init = false;
 			state.sound.anim = SOUND_OFF;
+			utils_printf("SOUND_OFF\n");
 			// set pwm level to zero here?
 		}
 	}
-
+	bool stalled = true;
 	if (!dma_buffer1.in_use && !dma_buffer1.primed) {
 		decode_mp3_into_dma_buffer(&dma_buffer1, firetruck_siren_loop_all_mp3, &mp3_offset, firetruck_siren_loop_all_mp3_len);
+		stalled = false;
 	}
 	if (!dma_buffer2.in_use && !dma_buffer2.primed) {
 		decode_mp3_into_dma_buffer(&dma_buffer2, firetruck_siren_loop_all_mp3, &mp3_offset, firetruck_siren_loop_all_mp3_len);
+		stalled = false;
+	}
+	stalled = stalled && mp3_offset < firetruck_siren_loop_all_mp3_len && !dma_channel_is_busy(MOD_SOUND_DMA_CH1);
+	if (stalled) {
+		// rip buffer 2
+		utils_printf("sound stalled\n");
+		dma_buffer2.primed = false;
+		get_dma_running();
 	}
 
 	if (first_run) {

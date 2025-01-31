@@ -106,9 +106,8 @@ void renderer_loop() {
 
 		render_state();
 
-		const auto end = time_us_32();
-		const int32_t elapsed_us = utils_time_diff_us(start, end);
-		const auto remaining_us = RENDER_TICK - elapsed_us;
+		const auto elapsed_us = utils_time_diff_us(start, time_us_32());
+		const auto remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;
 
 		if (remaining_us > 0) sleep_us(remaining_us);
 	}

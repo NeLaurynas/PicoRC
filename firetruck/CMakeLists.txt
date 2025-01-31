@@ -64,7 +64,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-Winline
 		#		-Werror
 		-Wno-error=old-style-declaration
-		-march=armv8-m.main
+		-mcpu=cortex-m33
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb
@@ -81,7 +81,7 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-O1
 		-s
 		-g0
-		-march=armv8-m.main
+		-mcpu=cortex-m33
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb
@@ -99,7 +99,7 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 )
 
 target_link_options(${PROJECT_NAME} PRIVATE
-		-march=armv8-m.main
+		-mcpu=cortex-m33
 		-mtune=cortex-m33
 		-mfpu=fpv5-sp-d16
 		-mthumb

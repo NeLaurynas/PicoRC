@@ -24,6 +24,7 @@
  *		buffers are primed but not in use, so logic doesn't load new data or launch
  *		dma channel and anim_loop doesn't go to off - TODO - fix? but this is like assert - clearly tells problem has been raised)
  *	also should not be too big, because decoding data can also cause stall?
+ *	fails at 18 mhz ant 25 mhz kek
  */
 #define DECODED_BUFF_SIZE	(1152*4)
 #define MP3_BUFF_SIZE		(610*4)
@@ -43,12 +44,6 @@ volatile static u8 mp3_buffer[MP3_BUFF_SIZE] = { 0 };
 static mp3dec_t mp3d;
 static u8 slice;
 static u8 channel;
-
-u16 *utils_pwm_cc_for_16bit(const u8 slice, const u8 channel) {
-	assert(channel == 0 || channel == 1);
-
-	return (u16 *)&pwm_hw->slice[slice].cc + channel;
-}
 
 static void get_dma_running() {
 	dma_buffer1.in_use = true;

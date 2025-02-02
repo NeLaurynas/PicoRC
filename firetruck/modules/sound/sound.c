@@ -105,21 +105,22 @@ static void __isr dma_irq_handler() {
 		if (dma_buffer1.in_use) {
 			dma_buffer1.in_use = false;
 			dma_buffer1.primed = false;
-			next_buffer = 1;
 			if (dma_buffer2.primed) {
 				dma_buffer2.in_use = true;
 				dma_channel_set_read_addr(MOD_SOUND_DMA_CH1, dma_buffer2.data, false);
 				dma_channel_set_trans_count(MOD_SOUND_DMA_CH1, dma_buffer2.size, true);
-			}
+				next_buffer = 0;
+			} else next_buffer = 1;
 		} else if (dma_buffer2.in_use) {
 			dma_buffer2.in_use = false;
 			dma_buffer2.primed = false;
-			next_buffer = 0;
 			if (dma_buffer1.primed) {
 				dma_buffer1.in_use = true;
 				dma_channel_set_read_addr(MOD_SOUND_DMA_CH1, dma_buffer1.data, false);
 				dma_channel_set_trans_count(MOD_SOUND_DMA_CH1, dma_buffer1.size, true);
-			}
+				next_buffer = 1;
+			} else next_buffer = 0;
+
 		}
 	}
 }

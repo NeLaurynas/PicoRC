@@ -23,8 +23,8 @@
  *	buffer size should be big enough to not run out of data, causing a stall
  *	also should not be too big, because decoding data can also cause stall?
  */
-#define DECODED_BUFF_SIZE	(1152*3)
-#define MP3_BUFF_SIZE		(610*3)
+#define DECODED_BUFF_SIZE	(1152*4)
+#define MP3_BUFF_SIZE		(610*4)
 
 typedef struct {
 	u16 data[DECODED_BUFF_SIZE];
@@ -35,17 +35,24 @@ typedef struct {
 
 static dma_buffer_t dma_buffer1 = { 0 };
 static dma_buffer_t dma_buffer2 = { 0 };
+static dma_buffer_t *dma_buffers[2] = { &dma_buffer1, &dma_buffer2 };
 static mp3d_sample_t pcm_buffer[DECODED_BUFF_SIZE] = { 0 };
 static u8 mp3_buffer[MP3_BUFF_SIZE] = { 0 };
 
 static mp3dec_t mp3d;
 static u8 slice;
 static u8 channel;
+static u8 next_buffer = 0;
+
+static inline void inc_next_buffer() {
+	next_buffer = (next_buffer + 1) % 2;
+}
 
 static void get_dma_running() {
-	dma_buffer1.in_use = true;
-	dma_buffer2.in_use = false;
-	dma_channel_transfer_from_buffer_now(MOD_SOUND_DMA_CH1, dma_buffer1.data, dma_buffer1.size);
+	dma_buffers[next_buffer]->in_use = true;
+	dma_channel_transfer_from_buffer_now(MOD_SOUND_DMA_CH1, dma_buffers[next_buffer]->data, dma_buffers[next_buffer]->size);
+	inc_next_buffer();
+	dma_buffers[next_buffer]->in_use = false;
 }
 
 static void decode_mp3_into_dma_buffer(dma_buffer_t *dma_buffer, const char *mp3_data, u32 *mp3_offset, const u32 mp3_len) {
@@ -98,6 +105,7 @@ static void __isr dma_irq_handler() {
 		if (dma_buffer1.in_use) {
 			dma_buffer1.in_use = false;
 			dma_buffer1.primed = false;
+			next_buffer = 1;
 			if (dma_buffer2.primed) {
 				dma_buffer2.in_use = true;
 				dma_channel_set_read_addr(MOD_SOUND_DMA_CH1, dma_buffer2.data, false);
@@ -106,6 +114,7 @@ static void __isr dma_irq_handler() {
 		} else if (dma_buffer2.in_use) {
 			dma_buffer2.in_use = false;
 			dma_buffer2.primed = false;
+			next_buffer = 0;
 			if (dma_buffer1.primed) {
 				dma_buffer1.in_use = true;
 				dma_channel_set_read_addr(MOD_SOUND_DMA_CH1, dma_buffer1.data, false);
@@ -143,9 +152,7 @@ static void anim_loop() {
 	}
 	stalled = stalled && mp3_offset < firetruck_siren_loop_all_mp3_len && !dma_channel_is_busy(MOD_SOUND_DMA_CH1);
 	if (stalled) {
-		// rip buffer 2
 		utils_printf("sound stalled\n");
-		dma_buffer2.primed = false;
 		get_dma_running();
 	}
 

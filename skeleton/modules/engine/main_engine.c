@@ -7,5 +7,5 @@ void main_engine_init() {
 
 }
 
-void main_engine_vals(i16 left, i16 right) {
+void main_engine_vals(i32 left, i32 right) {
 }

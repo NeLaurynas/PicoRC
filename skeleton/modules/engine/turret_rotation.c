@@ -12,10 +12,10 @@
 #include "utils.h"
 #include "defines/config.h"
 
-static uint slice3 = 0;
-static uint slice4 = 0;
-static uint channel3 = 0;
-static uint channel4 = 0;
+static u32 slice3 = 0;
+static u32 slice4 = 0;
+static u32 channel3 = 0;
+static u32 channel4 = 0;
 static u32 buffer_cc3[1] = { 0 };
 static u32 buffer_cc4[1] = { 0 };
 
@@ -68,7 +68,7 @@ void turret_rotation_init() {
 	// sleep_ms(1);
 }
 
-void turret_rotation_rotate(i16 val) {
+void turret_rotation_rotate(i32 val) {
 	return;
 	// const bool neg = val < 0;
 	// const auto pwm_perc = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 100;

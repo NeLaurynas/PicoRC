@@ -5,6 +5,7 @@
 #define RENDERER_H
 #include <controller/uni_gamepad.h>
 
+void renderer_init();
 void renderer_set_state(uni_gamepad_t *gamepad);
 void renderer_loop();
 

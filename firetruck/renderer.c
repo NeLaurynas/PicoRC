@@ -40,18 +40,22 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 }
 
 static void render_state() {
-	// get early
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a == true) {
-			state.sound.anim = SOUND_LOOP;
-		}
-		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
-		// toggle?
+			state.sound.anim |= SOUND_HORN;
+		} else state.sound.anim &= ~SOUND_HORN;
 		current_state.btn_a = state.btn_a;
+	}
+
+	if (current_state.btn_b != state.btn_b) {
+		if (state.btn_b == true) {
+			state.sound.anim |= SOUND_LOOP;
+		} else state.sound.anim &= ~SOUND_LOOP;
+		current_state.btn_b = state.btn_b;
 	}
 }
 
-static void init() {
+void renderer_init() {
 	// turret_rotation_init();
 	sound_init();
 }
@@ -60,18 +64,19 @@ void renderer_loop() {
 	const void (*animation_functions[])() = { sound_animation };
 	constexpr u8 anim_fn_size = ARRAY_SIZE(animation_functions);
 
-	init();
-
 	// ReSharper disable once CppDFAEndlessLoop
+
+	renderer_init();
+
 	for (;;) {
 		can_set_state = true;
-		const auto start = time_us_32();
+		const u32 start = time_us_32();
 
 		render_state();
 		for (u8 i = 0; i < anim_fn_size; i++) animation_functions[i]();
 
-		const auto elapsed_us = utils_time_diff_us(start, time_us_32());
-		const auto remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;
+		const u32 elapsed_us = utils_time_diff_us(start, time_us_32());
+		const u32 remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;
 
 		// utils_printf("x\n");
 		if (remaining_us > 0) sleep_us(remaining_us);

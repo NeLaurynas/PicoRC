@@ -7,11 +7,11 @@
 #include <shared_config.h>
 
 typedef struct {
-	i16 x;
-	i16 y;
+	i32 x;
+	i32 y;
 
-	i16 rx;
-	i16 ry;
+	i32 rx;
+	i32 ry;
 
 	bool btn_a;
 	bool btn_x;
@@ -21,16 +21,16 @@ typedef struct {
 	bool shoulder_l;
 	bool shoulder_r;
 
-	u16 throttle;
-	u16 brake;
+	i32 throttle;
+	i32 brake;
 } State;
 
 typedef struct {
-	i16 x;
-	i16 y;
+	i32 x;
+	i32 y;
 
-	i16 rx;
-	i16 ry;
+	i32 rx;
+	i32 ry;
 
 	bool btn_a;
 	bool btn_a_toggle;
@@ -41,8 +41,8 @@ typedef struct {
 	bool shoulder_l;
 	bool shoulder_r;
 
-	u16 throttle;
-	u16 brake;
+	i32 throttle;
+	i32 brake;
 } CurrentState;
 
 volatile extern State state;

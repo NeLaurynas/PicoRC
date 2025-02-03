@@ -23,7 +23,7 @@
 struct uni_platform* get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(80'000, false);
+	set_sys_clock_khz(33'000, false);
 
 	stdio_init_all();
 

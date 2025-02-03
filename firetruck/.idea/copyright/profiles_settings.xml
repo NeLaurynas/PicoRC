@@ -1,5 +1,5 @@
 <component name="CopyrightManager">
-  <settings>
+  <settings default="bsd">
     <module2copyright>
       <element module="Project Files" copyright="bsd" />
     </module2copyright>

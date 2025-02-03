@@ -5,6 +5,3 @@
 [submodule "lib/pico-shared"]
 	path = lib/pico-shared
 	url = git@github.com:NeLaurynas/pico-shared.git
-[submodule "lib/minimp3"]
-	path = lib/minimp3
-	url = git@github.com:lieff/minimp3.git

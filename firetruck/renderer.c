@@ -24,6 +24,9 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (state.btn_b != (gamepad->buttons & BUTTON_B)) state.btn_b = (gamepad->buttons & BUTTON_B);
 	if (state.btn_y != (gamepad->buttons & BUTTON_Y)) state.btn_y = (gamepad->buttons & BUTTON_Y);
 
+	if (state.shoulder_l != (gamepad->buttons & BUTTON_SHOULDER_L)) state.shoulder_l = (gamepad->buttons & BUTTON_SHOULDER_L);
+	if (state.shoulder_r != (gamepad->buttons & BUTTON_SHOULDER_R)) state.shoulder_r = (gamepad->buttons & BUTTON_SHOULDER_R);
+
 	if (state.brake != gamepad->brake) state.brake = gamepad->brake;
 	if (state.throttle != gamepad->throttle) state.throttle = gamepad->throttle;
 
@@ -40,18 +43,20 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 }
 
 static void render_state() {
-	if (current_state.btn_a != state.btn_a) {
-		if (state.btn_a == true) {
-			state.sound.anim |= SOUND_HORN;
-		} else state.sound.anim &= ~SOUND_HORN;
-		current_state.btn_a = state.btn_a;
-	}
+	if (current_state.shoulder_l != state.shoulder_l || current_state.shoulder_r != state.shoulder_r) {
+		if (state.shoulder_l == true) {
+			if (state.sound.anim & SOUND_LOOP) {
+				state.sound.anim &= ~SOUND_LOOP;
+			} else {
+				state.sound.anim = state.sound.anim | SOUND_LOOP;
+			}
+		}
 
-	if (current_state.btn_b != state.btn_b) {
-		if (state.btn_b == true) {
-			state.sound.anim |= SOUND_LOOP;
-		} else state.sound.anim &= ~SOUND_LOOP;
-		current_state.btn_b = state.btn_b;
+		if (state.shoulder_r == true) state.sound.anim = state.sound.anim | SOUND_WAIL;
+		else state.sound.anim &= ~SOUND_WAIL;
+
+		current_state.shoulder_l = state.shoulder_l;
+		current_state.shoulder_r = state.shoulder_r;
 	}
 }
 

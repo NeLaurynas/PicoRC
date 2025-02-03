@@ -33,6 +33,8 @@ add_executable(${PROJECT_NAME}
 		modules/engine/turret_rotation.h
 		modules/engine/main_engine.c
 		modules/engine/main_engine.h
+		modules/sound/sound.c
+		modules/sound/sound.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

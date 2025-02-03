@@ -17,7 +17,8 @@
 typedef enum {
 	SOUND_OFF = 0,
 	SOUND_HORN = 1 << 0,
-	SOUND_LOOP = 1 << 1
+	SOUND_LOOP = 1 << 1,
+	SOUND_WAIL = 1 << 2,
 } sound_anim_t;
 
 typedef struct {

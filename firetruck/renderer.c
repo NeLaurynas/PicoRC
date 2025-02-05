@@ -8,12 +8,12 @@
 #include <stdlib.h>
 
 #include "defines/config.h"
-#include "modules/engine/turret_rotation.h"
 #include "modules/sound/sound.h"
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
 #include "modules/emergency_leds/emergency_leds.h"
+#include "modules/engines/engines.h"
 
 volatile static bool can_set_state = true;
 
@@ -74,6 +74,7 @@ static void render_state() {
 void renderer_init() {
 	sound_init();
 	emergency_leds_init();
+	engines_init();
 }
 
 void renderer_loop() {

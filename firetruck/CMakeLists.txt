@@ -29,14 +29,12 @@ add_executable(${PROJECT_NAME}
 		state.h
 		renderer.c
 		renderer.h
-		modules/engine/turret_rotation.c
-		modules/engine/turret_rotation.h
-		modules/engine/main_engine.c
-		modules/engine/main_engine.h
 		modules/sound/sound.c
 		modules/sound/sound.h
 		modules/emergency_leds/emergency_leds.c
 		modules/emergency_leds/emergency_leds.h
+		modules/engines/engines.c
+		modules/engines/engines.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

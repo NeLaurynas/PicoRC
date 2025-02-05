@@ -17,13 +17,11 @@
 
 #include "shared_config.h"
 #include "utils.h"
-#include "modules/engine/turret_rotation.h"
-#include "modules/sound/sound.h"
 
 struct uni_platform* get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(18'000, false);
+	set_sys_clock_khz(48'000, false);
 
 	stdio_init_all();
 

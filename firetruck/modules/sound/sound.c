@@ -6,7 +6,6 @@
 #include <hardware/clocks.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
-#include <pico/time.h>
 
 #include "shared_config.h"
 #include "state.h"
@@ -21,10 +20,13 @@
 #define RISING_STEP_STEEP   75.0f    // for WAIL
 #define FALLING_STEP_STEEP  55.0f    // for WAIL
 
+#define LOOP_FOR_SECONDS	15
+
 static u32 channel;
 static u32 slice;
 static bool rising = true;
 static float freq = FREQ_MIN;
+static u32 looping_for = 0;
 
 void sound_init() {
 	gpio_set_function(MOD_SOUND_PIN, GPIO_FUNC_PWM);
@@ -42,9 +44,9 @@ void sound_init() {
 }
 
 void anim_loop() {
-	uint16_t wrap = (uint16_t)(FREQUENCY / freq) - 1;
+	const u16 wrap = (u16)(FREQUENCY / freq) - 1;
 	pwm_set_wrap(slice, wrap);
-	uint16_t level = (wrap + 1) / 2;
+	const u16 level = (wrap + 1) / 2;
 	pwm_set_chan_level(slice, channel, level);
 
 	if (state.sound.anim & SOUND_WAIL) {
@@ -62,14 +64,18 @@ void anim_loop() {
 		rising = true;
 		freq = FREQ_MIN;
 	}
+
+	looping_for += RENDER_TICK;
+	if (looping_for >= LOOP_FOR_SECONDS * 1'000'000) state.sound.anim = SOUND_OFF;
 }
 
 void sound_animation() {
-	if (state.sound.anim & (SOUND_LOOP | SOUND_WAIL)) {
+	if ((state.sound.anim & (SOUND_LOOP | SOUND_WAIL) && !state.sound.off)) {
 		anim_loop();
 	} else if (state.sound.anim == SOUND_OFF) {
 		pwm_set_chan_level(slice, channel, 0);
 		rising = true;
 		freq = FREQ_MIN;
+		looping_for = 0;
 	}
 }

@@ -13,4 +13,7 @@
 #define MOD_SOUND_DMA_CH 2
 #define MOD_SOUND_IRQ 0
 
+#define MOD_EMERGENCY_LEDS1 16
+#define MOD_EMERGENCY_LEDS2 17
+
 #endif //CONFIG_H

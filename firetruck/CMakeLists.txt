@@ -35,6 +35,8 @@ add_executable(${PROJECT_NAME}
 		modules/engine/main_engine.h
 		modules/sound/sound.c
 		modules/sound/sound.h
+		modules/emergency_leds/emergency_leds.c
+		modules/emergency_leds/emergency_leds.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

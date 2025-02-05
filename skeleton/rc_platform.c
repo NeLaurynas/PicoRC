@@ -113,7 +113,7 @@ static void rc_platform_on_controller_data(uni_hid_device_t *d, uni_controller_t
 
 static const uni_property_t *rc_platform_get_property(uni_property_idx_t idx) {
 	ARG_UNUSED(idx);
-	return NULL;
+	return nullptr;
 }
 
 static void rc_platform_on_oob_event(uni_platform_oob_event_t event, void *data) {

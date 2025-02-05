@@ -13,6 +13,7 @@
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "modules/emergency_leds/emergency_leds.h"
 
 volatile static bool can_set_state = true;
 
@@ -44,7 +45,15 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 
 static void render_state() {
 	if (current_state.shoulder_l != state.shoulder_l || current_state.shoulder_r != state.shoulder_r) {
-		if (state.shoulder_l == true) {
+		if (state.shoulder_l || state.shoulder_r) state.sound.off = !state.sound.off;
+
+		current_state.shoulder_l = state.shoulder_l;
+		current_state.shoulder_r = state.shoulder_r;
+	}
+
+	if (current_state.btn_x != state.btn_x || current_state.btn_b != state.btn_b || current_state.btn_a != state.btn_a || current_state
+		.btn_y != state.btn_y) {
+		if (state.btn_x || state.btn_y) {
 			if (state.sound.anim & SOUND_LOOP) {
 				state.sound.anim &= ~SOUND_LOOP;
 			} else {
@@ -52,27 +61,28 @@ static void render_state() {
 			}
 		}
 
-		if (state.shoulder_r == true) state.sound.anim = state.sound.anim | SOUND_WAIL;
+		if (state.btn_b || state.btn_a) state.sound.anim = state.sound.anim | SOUND_WAIL;
 		else state.sound.anim &= ~SOUND_WAIL;
 
-		current_state.shoulder_l = state.shoulder_l;
-		current_state.shoulder_r = state.shoulder_r;
+		current_state.btn_x = state.btn_x;
+		current_state.btn_b = state.btn_b;
+		current_state.btn_a = state.btn_a;
+		current_state.btn_y = state.btn_y;
 	}
 }
 
 void renderer_init() {
-	// turret_rotation_init();
 	sound_init();
+	emergency_leds_init();
 }
 
 void renderer_loop() {
-	const void (*animation_functions[])() = { sound_animation };
+	const void (*animation_functions[])() = { sound_animation, emergency_leds_animation };
 	constexpr u8 anim_fn_size = ARRAY_SIZE(animation_functions);
-
-	// ReSharper disable once CppDFAEndlessLoop
 
 	renderer_init();
 
+	// ReSharper disable once CppDFAEndlessLoop
 	for (;;) {
 		can_set_state = true;
 		const u32 start = time_us_32();

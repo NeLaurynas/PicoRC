@@ -16,7 +16,7 @@
  */
 typedef enum {
 	SOUND_OFF = 0,
-	SOUND_HORN = 1 << 0,
+	SOUND_HORN = 1 << 0, // no horn lamao
 	SOUND_LOOP = 1 << 1,
 	SOUND_WAIL = 1 << 2,
 } sound_anim_t;
@@ -41,6 +41,7 @@ typedef struct {
 
 	struct {
 		sound_anim_t anim;
+		bool off;
 	} sound;
 } State;
 
@@ -62,6 +63,7 @@ typedef struct {
 
 	u16 throttle;
 	u16 brake;
+
 } CurrentState;
 
 volatile extern State state;

@@ -8,4 +8,8 @@ void sound_init();
 
 void sound_animation();
 
+void volume_increase();
+
+void volume_decrease();
+
 #endif //SOUND_H

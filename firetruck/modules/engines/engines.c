@@ -3,6 +3,7 @@
 
 #include "engines.h"
 
+#include <math.h>
 #include <hardware/dma.h>
 #include <hardware/gpio.h>
 #include <hardware/pwm.h>
@@ -28,7 +29,7 @@ void engines_init() {
 	gpio_set_dir(MOD_ENGINE_ENABLE3, true);
 	gpio_set_dir(MOD_ENGINE_ENABLE4, true);
 	gpio_set_function(MOD_ENGINE_PWM1, GPIO_FUNC_PWM);
-	gpio_set_function(MOD_ENGINE_PWM1, GPIO_FUNC_PWM);
+	gpio_set_function(MOD_ENGINE_PWM2, GPIO_FUNC_PWM);
 
 	slice1 = pwm_gpio_to_slice_num(MOD_ENGINE_PWM1);
 	slice2 = pwm_gpio_to_slice_num(MOD_ENGINE_PWM2);
@@ -72,23 +73,25 @@ void engines_init() {
 	sleep_ms(1);
 }
 
-static void adjust_pwm(u16 *pwm) {
-	if (*pwm <= 4000) {
-		*pwm = *pwm * 1.05;
-	} else if (*pwm <= 5000) {
-		*pwm = *pwm * (1.05 - 0.025 * ((*pwm - 4000) / 1000.0));
-	} else if (*pwm <= 6000) {
-		*pwm = *pwm * (1.025 - 0.02 * ((*pwm - 5000) / 1000.0)); // Gradual reduction from 1.05x to 1.02x
-	} else if (*pwm <= 9000) {
-		*pwm = *pwm * (1.005 - 0.27 * ((*pwm - 6000) / 3000.0)); // Gradual decrease to 0.75x
-	}
+static void adjust_pwm(i32 *pwm) {
+	if (*pwm == 0) return;
+	if (*pwm >= 9000) return;
+
+	u32 out;
+	if (*pwm <= 1000) out = 4UL * *pwm;
+	else out = 4000UL + (5UL * (*pwm - 1000UL)) / 8UL;
+
+	*pwm = (i32)out;
 }
 
-static void set_motor_ctrl(const bool drive_engine, const i16 val, const u16 pwm) {
+static void set_motor_ctrl(const bool drive_engine, const i32 val, const u16 pwm) {
 	const u8 pin1 = drive_engine ? MOD_ENGINE_ENABLE1 : MOD_ENGINE_ENABLE3;
 	const u8 pin2 = drive_engine ? MOD_ENGINE_ENABLE2 : MOD_ENGINE_ENABLE4;
 	const u8 dma_ch = drive_engine ? MOD_ENGINE_DMA_CH1 : MOD_ENGINE_DMA_CH2;
-	const u16 *buffer = drive_engine ? &buffers[0] : &buffers[1];
+	u16 *buffer = drive_engine ? &buffers[0] : &buffers[1];
+	*buffer = pwm;
+
+	utils_printf("val: %d, pwm: %d\n", val, pwm);
 
 	if (val < 0) {
 		gpio_put(pin1, false);
@@ -101,15 +104,16 @@ static void set_motor_ctrl(const bool drive_engine, const i16 val, const u16 pwm
 	}
 }
 
-void engines_drive(const i16 val) {
-	u16 pwm = utils_scaled_pwm_percentage(val, TRIG_DEAD_ZONE, TRIG_MAX) * 100;
+void engines_drive(const i32 val) {
+	i32 pwm = utils_scaled_pwm_percentage(val, TRIG_DEAD_ZONE, TRIG_MAX) * 100;
+	utils_printf("pwm: %d\n", pwm);
 	adjust_pwm(&pwm);
 
 	set_motor_ctrl(true, val, pwm);
 }
 
-void engines_turn(const i16 val) {
-	u16 pwm = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 100;
+void engines_turn(const i32 val) {
+	i32 pwm = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 100;
 	adjust_pwm(&pwm);
 
 	set_motor_ctrl(false, val, pwm);

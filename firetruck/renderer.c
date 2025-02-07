@@ -3,17 +3,17 @@
 
 #include "renderer.h"
 
+#include <stdlib.h>
 #include <hardware/timer.h>
 #include <pico/cyw43_arch.h>
-#include <stdlib.h>
 
-#include "defines/config.h"
-#include "modules/sound/sound.h"
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "defines/config.h"
 #include "modules/emergency_leds/emergency_leds.h"
 #include "modules/engines/engines.h"
+#include "modules/sound/sound.h"
 
 volatile static bool can_set_state = true;
 
@@ -34,21 +34,21 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (state.x != gamepad->axis_x) state.x = gamepad->axis_x;
 	if (state.y != gamepad->axis_y) state.y = gamepad->axis_y;
 
-	if (state.rx != gamepad->axis_rx) {
-		state.rx = gamepad->axis_rx;
-		// turret_rotation_rotate(state.rx);
-	}
+	if (state.rx != gamepad->axis_rx) state.rx = gamepad->axis_rx;
 	if (state.ry != gamepad->axis_ry) state.ry = gamepad->axis_ry;
 
 	can_set_state = false;
 }
 
 static void render_state() {
-	if (current_state.shoulder_l != state.shoulder_l || current_state.shoulder_r != state.shoulder_r) {
-		if (state.shoulder_l || state.shoulder_r) state.sound.off = !state.sound.off;
-
+	if (current_state.shoulder_l != state.shoulder_l) {
 		current_state.shoulder_l = state.shoulder_l;
+		if (state.shoulder_l) volume_decrease();
+	}
+
+	if (current_state.shoulder_r != state.shoulder_r) {
 		current_state.shoulder_r = state.shoulder_r;
+		if (state.shoulder_r) volume_increase();
 	}
 
 	if (current_state.btn_x != state.btn_x || current_state.btn_b != state.btn_b || current_state.btn_a != state.btn_a || current_state
@@ -68,6 +68,17 @@ static void render_state() {
 		current_state.btn_b = state.btn_b;
 		current_state.btn_a = state.btn_a;
 		current_state.btn_y = state.btn_y;
+	}
+
+	if (current_state.brake != state.brake || current_state.throttle != state.throttle) {
+		engines_drive(state.throttle - state.brake);
+		current_state.brake = state.brake;
+		current_state.throttle = state.throttle;
+	}
+
+	if (current_state.x != state.x) {
+		engines_turn(state.x);
+		current_state.x = state.x;
 	}
 }
 

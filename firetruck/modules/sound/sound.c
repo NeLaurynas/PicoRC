@@ -13,8 +13,8 @@
 #include "defines/config.h"
 
 #define FREQUENCY			1000000.0f
-#define FREQ_MIN            300.0f   // Lower bound of frequency in Hz
-#define FREQ_MAX            1200.0f  // Upper bound of frequency in Hz
+#define FREQ_MIN            200.0f   // Lower bound of frequency in Hz
+#define FREQ_MAX            1000.0f  // Upper bound of frequency in Hz
 #define RISING_STEP         5.0f     // Larger step for a faster rising sweep
 #define FALLING_STEP        3.0f     // Smaller step for a slower falling sweep
 #define RISING_STEP_STEEP   75.0f    // for WAIL
@@ -78,4 +78,12 @@ void sound_animation() {
 		freq = FREQ_MIN;
 		looping_for = 0;
 	}
+}
+
+void volume_increase() {
+	state.sound.off = false;
+}
+
+void volume_decrease() {
+	state.sound.off = true;
 }

@@ -7,8 +7,8 @@
 
 void engines_init();
 
-void engines_drive(i16 val);
+void engines_drive(i32 val);
 
-void engines_turn(i16 val);
+void engines_turn(i32 val);
 
 #endif //ENGINES_H

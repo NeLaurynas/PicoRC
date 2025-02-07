@@ -7,7 +7,7 @@
 #define RENDER_TICK 10'000
 
 #define MOD_ENGINE_XY_DEAD_ZONE 40
-#define MOD_ENGINE_XY_MAX 510
+#define MOD_ENGINE_XY_MAX 490
 
 #define TRIG_DEAD_ZONE 10
 #define TRIG_MAX 1000
@@ -22,13 +22,10 @@
 #define MOD_ENGINE_PWM1 14 // drive
 #define MOD_ENGINE_PWM2 9 // turn
 #define MOD_ENGINE_DMA_CH1 3 // drive
-#define MOD_ENGINE_DMA_CH2 4 // drive
-#define MOD_ENGINE_ENABLE1 13 // drive
-#define MOD_ENGINE_ENABLE2 12 // drive
-#define MOD_ENGINE_ENABLE3 11 // turn
-#define MOD_ENGINE_ENABLE4 10 // turn
-
-#define MOD_HARDWARE_BTN1 0
-#define MOD_HARDWARE_BTN2 1
+#define MOD_ENGINE_DMA_CH2 4 // turn
+#define MOD_ENGINE_ENABLE2 13 // drive
+#define MOD_ENGINE_ENABLE1 12 // drive
+#define MOD_ENGINE_ENABLE3 10 // turn
+#define MOD_ENGINE_ENABLE4 11 // turn
 
 #endif //CONFIG_H

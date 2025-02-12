@@ -71,7 +71,7 @@ static void render_state() {
 	}
 
 	if (current_state.brake != state.brake || current_state.throttle != state.throttle) {
-		engines_drive(state.throttle - state.brake);
+		engines_drive((state.throttle - state.brake) * -1);
 		current_state.brake = state.brake;
 		current_state.throttle = state.throttle;
 	}

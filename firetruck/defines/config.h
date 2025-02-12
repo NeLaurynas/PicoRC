@@ -19,13 +19,11 @@
 #define MOD_EMERGENCY_LEDS1 16
 #define MOD_EMERGENCY_LEDS2 17
 
-#define MOD_ENGINE_PWM1 14 // drive
-#define MOD_ENGINE_PWM2 9 // turn
+#define MOD_ENGINE_PWM1 15 // drive
+#define MOD_ENGINE_PWM2 12 // turn
 #define MOD_ENGINE_DMA_CH1 3 // drive
 #define MOD_ENGINE_DMA_CH2 4 // turn
-#define MOD_ENGINE_ENABLE2 13 // drive
-#define MOD_ENGINE_ENABLE1 12 // drive
-#define MOD_ENGINE_ENABLE3 10 // turn
-#define MOD_ENGINE_ENABLE4 11 // turn
+#define MOD_ENGINE_ENABLE1 14 // drive
+#define MOD_ENGINE_ENABLE2 13 // turn
 
 #endif //CONFIG_H

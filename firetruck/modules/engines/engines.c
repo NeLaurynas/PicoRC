@@ -12,7 +12,7 @@
 #include "utils.h"
 #include "defines/config.h"
 
-#define PWM_DIVIDER 20.0f
+#define PWM_DIVIDER 1.0f
 
 static u16 slice1, slice2 = 0;
 static u16 channel1, channel2 = 0;
@@ -22,12 +22,8 @@ void engines_init() {
 	// mask maybe next time, no?
 	gpio_init(MOD_ENGINE_ENABLE1);
 	gpio_init(MOD_ENGINE_ENABLE2);
-	gpio_init(MOD_ENGINE_ENABLE3);
-	gpio_init(MOD_ENGINE_ENABLE4);
 	gpio_set_dir(MOD_ENGINE_ENABLE1, true);
 	gpio_set_dir(MOD_ENGINE_ENABLE2, true);
-	gpio_set_dir(MOD_ENGINE_ENABLE3, true);
-	gpio_set_dir(MOD_ENGINE_ENABLE4, true);
 	gpio_set_function(MOD_ENGINE_PWM1, GPIO_FUNC_PWM);
 	gpio_set_function(MOD_ENGINE_PWM2, GPIO_FUNC_PWM);
 
@@ -85,8 +81,7 @@ static void adjust_pwm(i32 *pwm) {
 }
 
 static void set_motor_ctrl(const bool drive_engine, const i32 val, const u16 pwm) {
-	const u8 pin1 = drive_engine ? MOD_ENGINE_ENABLE1 : MOD_ENGINE_ENABLE3;
-	const u8 pin2 = drive_engine ? MOD_ENGINE_ENABLE2 : MOD_ENGINE_ENABLE4;
+	const u8 pin1 = drive_engine ? MOD_ENGINE_ENABLE1 : MOD_ENGINE_ENABLE2;
 	const u8 dma_ch = drive_engine ? MOD_ENGINE_DMA_CH1 : MOD_ENGINE_DMA_CH2;
 	u16 *buffer = drive_engine ? &buffers[0] : &buffers[1];
 	*buffer = pwm;
@@ -95,11 +90,9 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, const u16 pwm
 
 	if (val < 0) {
 		gpio_put(pin1, false);
-		gpio_put(pin2, true);
 		dma_channel_transfer_from_buffer_now(dma_ch, buffer, 1);
 	} else {
 		gpio_put(pin1, val != 0);
-		gpio_put(pin2, false);
 		dma_channel_transfer_from_buffer_now(dma_ch, buffer, 1);
 	}
 }

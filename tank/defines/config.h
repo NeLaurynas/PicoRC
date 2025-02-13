@@ -16,8 +16,6 @@
 #define MOD_ENGINE_MAIN_PWM2 14
 #define MOD_ENGINE_MAIN_ENABLE1 13
 #define MOD_ENGINE_MAIN_ENABLE2 12
-#define MOD_ENGINE_MAIN_ENABLE3 11
-#define MOD_ENGINE_MAIN_ENABLE4 10
 #define MOD_ENGINE_MAIN_DMA_CH1 2 // 0 and 1 is used by cyw43 chip or btstack or bluepad32
 #define MOD_ENGINE_MAIN_DMA_CH2 3
 

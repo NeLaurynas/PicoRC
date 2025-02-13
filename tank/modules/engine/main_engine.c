@@ -20,12 +20,8 @@ static u32 buffer[1] = { 0 };
 void main_engine_init() {
 	gpio_init(MOD_ENGINE_MAIN_ENABLE1);
 	gpio_init(MOD_ENGINE_MAIN_ENABLE2);
-	gpio_init(MOD_ENGINE_MAIN_ENABLE3);
-	gpio_init(MOD_ENGINE_MAIN_ENABLE4);
 	gpio_set_dir(MOD_ENGINE_MAIN_ENABLE1, true);
 	gpio_set_dir(MOD_ENGINE_MAIN_ENABLE2, true);
-	gpio_set_dir(MOD_ENGINE_MAIN_ENABLE3, true);
-	gpio_set_dir(MOD_ENGINE_MAIN_ENABLE4, true);
 	gpio_set_function(MOD_ENGINE_MAIN_PWM1, GPIO_FUNC_PWM);
 	gpio_set_function(MOD_ENGINE_MAIN_PWM2, GPIO_FUNC_PWM);
 
@@ -36,16 +32,18 @@ void main_engine_init() {
 
 	// init PWM
 	auto pwm_c1 = pwm_get_default_config();
-	pwm_c1.top = 10000;
+	pwm_c1.top = 100;
 	pwm_init(slice1, &pwm_c1, false);
-	pwm_set_clkdiv(slice1, 20.f); // 3.f for 5 khz frequency (2.f for 7.5 khz 1.f for 15 khz)
+	auto clk_div = utils_calculate_pio_clk_div(0.5f);
+	utils_printf("MAIN ENGINE CLK DIV: %f", clk_div);
+	pwm_set_clkdiv(slice1, clk_div); // 3.f for 5 khz frequency (2.f for 7.5 khz 1.f for 15 khz)
 	pwm_set_phase_correct(slice1, false);
 	pwm_set_enabled(slice1, true);
 
 	auto pwm_c2 = pwm_get_default_config();
-	pwm_c2.top = 10000;
+	pwm_c2.top = 100;
 	pwm_init(slice2, &pwm_c2, false);
-	pwm_set_clkdiv(slice2, 20.f);
+	pwm_set_clkdiv(slice2, clk_div);
 	pwm_set_phase_correct(slice2, false);
 	pwm_set_enabled(slice2, true);
 	sleep_ms(1);
@@ -72,8 +70,7 @@ void main_engine_init() {
 }
 
 static void set_motor_ctrl(const i16 val, const u16 pwm, const bool is_left_motor) {
-	const u8 pin1 = is_left_motor ? MOD_ENGINE_MAIN_ENABLE1 : MOD_ENGINE_MAIN_ENABLE3;
-	const u8 pin2 = is_left_motor ? MOD_ENGINE_MAIN_ENABLE2 : MOD_ENGINE_MAIN_ENABLE4;
+	const u8 pin1 = is_left_motor ? MOD_ENGINE_MAIN_ENABLE1 : MOD_ENGINE_MAIN_ENABLE2;
 	const u8 dma_ch = is_left_motor ? MOD_ENGINE_MAIN_DMA_CH1 : MOD_ENGINE_MAIN_DMA_CH2;
 
 	const auto pwm_channel = dma_ch == MOD_ENGINE_MAIN_DMA_CH1 ? channel1 : channel2;
@@ -83,37 +80,33 @@ static void set_motor_ctrl(const i16 val, const u16 pwm, const bool is_left_moto
 		: (buffer[0] & 0xFFFF0000) | (pwm & 0xFFFF);
 
 	if (val < 0) {
-		gpio_put(pin1, false);
-		gpio_put(pin2, true);
+		gpio_put(pin1, true);
 		dma_channel_transfer_from_buffer_now(dma_ch, buffer, 1);
 	} else {
-		gpio_put(pin1, val != 0);
-		gpio_put(pin2, false);
+		gpio_put(pin1, false);
 		dma_channel_transfer_from_buffer_now(dma_ch, buffer, 1);
 	}
 }
 
-static void adjust_pwm(u16 *pwm, const bool less) {
-	auto start = less ? 1.0 : 1.15;
-	if (*pwm <= 4000) {
-		*pwm = *pwm * start; // Boost by 15%
-	} else if (*pwm <= 5000) {
-		start = start - 0.05;
-		*pwm = *pwm * (start * ((*pwm - 4000) / 1000.0)); // Gradual reduction from 1.15x to 1.05x
-	} else if (*pwm <= 6000) {
-		start = start - 0.03;
-		*pwm = *pwm * (start * ((*pwm - 5000) / 1000.0)); // Gradual reduction from 1.05x to 1.02x
-	} else if (*pwm <= 9000) {
-		start = start - 0.26;
-		*pwm = *pwm * (start * ((*pwm - 6000) / 3000.0)); // Gradual decrease to 0.75x
-	}
+static void adjust_pwm(u16 *pwm) {
+	if (*pwm == 0) return;
+	if (*pwm >= 90) return;
+
+	u16 out;
+	if (*pwm <= 10) out = 4UL * *pwm;
+	else out = 40UL + (5UL * (*pwm - 10UL)) / 8UL;
+
+	*pwm = out;
 }
 
 void main_engine_advanced(const i16 left, const i16 right) {
-	u16 pwm_left = utils_scaled_pwm_percentage(left, XY_DEAD_ZONE, XY_MAX) * 100;
-	u16 pwm_right = utils_scaled_pwm_percentage(right, XY_DEAD_ZONE, XY_MAX) * 100;
-	adjust_pwm(&pwm_left, false);
-	adjust_pwm(&pwm_right, false);
+	u16 pwm_left = utils_scaled_pwm_percentage(left, XY_DEAD_ZONE, XY_MAX);
+	u16 pwm_right = utils_scaled_pwm_percentage(right, XY_DEAD_ZONE, XY_MAX);
+	if (left < 0) pwm_left += 1;
+	if (right < 0) pwm_right += 1;
+	adjust_pwm(&pwm_left);
+	adjust_pwm(&pwm_right);
+	utils_printf("%d<<>>%d\n", pwm_left, pwm_right);
 
 	set_motor_ctrl(left, pwm_left, true);
 	set_motor_ctrl(right, pwm_right, false);
@@ -140,10 +133,11 @@ void main_engine_basic(const i16 gas, const i16 steer) {
 		*gas_active = sign * TRIG_MAX * scaled_value / 100;
 	}
 
-	u16 pwm_left = utils_scaled_pwm_percentage(gas_left, TRIG_DEAD_ZONE, TRIG_MAX) * 100;
-	u16 pwm_right = utils_scaled_pwm_percentage(gas_right, TRIG_DEAD_ZONE, TRIG_MAX) * 100;
-	adjust_pwm(&pwm_left, true);
-	adjust_pwm(&pwm_right, true);
+	u16 pwm_left = utils_scaled_pwm_percentage(gas_left, TRIG_DEAD_ZONE, TRIG_MAX);
+	u16 pwm_right = utils_scaled_pwm_percentage(gas_right, TRIG_DEAD_ZONE, TRIG_MAX);
+	adjust_pwm(&pwm_left);
+	adjust_pwm(&pwm_right);
+	utils_printf("%d<<%d>>%d\n", pwm_left, gas, pwm_right);
 
 	set_motor_ctrl(gas_left, pwm_left, true);
 	set_motor_ctrl(gas_right, pwm_right, false);

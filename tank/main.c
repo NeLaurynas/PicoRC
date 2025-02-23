@@ -1,31 +1,28 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
-#include <stdio.h>
+#include <btstack_run_loop.h>
 #include <hardware/clocks.h>
 #include <pico/cyw43_arch.h>
 #include <pico/cyw43_driver.h>
+#include <pico/multicore.h>
 #include <pico/stdio.h>
 #include <pico/time.h>
-#include "boards/pico2_w.h"
-#include <btstack_run_loop.h>
+#include <stdio.h>
 #include <uni.h>
-#include <pico/multicore.h>
+#include "boards/pico2_w.h"
 
 #include "renderer.h"
 #include "sdkconfig.h"
 #include "utils.h"
 
-#include "defines/config.h"
-#include "modules/engine/turret_ctrl.h"
-
 #undef PICO_FLASH_ASSERT_ON_UNSAFE
 #define PICO_FLASH_ASSERT_ON_UNSAFE 0
 
-struct uni_platform* get_rc_platform(void);
+struct uni_platform *get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(18'000, false);
+	set_sys_clock_khz(24'000, false);
 
 	stdio_init_all();
 

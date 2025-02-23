@@ -34,7 +34,7 @@ void main_engine_init() {
 	auto pwm_c1 = pwm_get_default_config();
 	pwm_c1.top = 100;
 	pwm_init(slice1, &pwm_c1, false);
-	auto clk_div = utils_calculate_pio_clk_div(0.5f);
+	const auto clk_div = utils_calculate_pio_clk_div(0.5f);
 	utils_printf("MAIN ENGINE CLK DIV: %f", clk_div);
 	pwm_set_clkdiv(slice1, clk_div); // 3.f for 5 khz frequency (2.f for 7.5 khz 1.f for 15 khz)
 	pwm_set_phase_correct(slice1, false);
@@ -69,7 +69,7 @@ void main_engine_init() {
 	sleep_ms(1);
 }
 
-static void set_motor_ctrl(const i16 val, const u16 pwm, const bool is_left_motor) {
+static void set_motor_ctrl(const i32 val, const u16 pwm, const bool is_left_motor) {
 	const u8 pin1 = is_left_motor ? MOD_ENGINE_MAIN_ENABLE1 : MOD_ENGINE_MAIN_ENABLE2;
 	const u8 dma_ch = is_left_motor ? MOD_ENGINE_MAIN_DMA_CH1 : MOD_ENGINE_MAIN_DMA_CH2;
 
@@ -99,7 +99,7 @@ static void adjust_pwm(u16 *pwm) {
 	*pwm = out;
 }
 
-void main_engine_advanced(const i16 left, const i16 right) {
+void main_engine_advanced(const i32 left, const i32 right) {
 	u16 pwm_left = utils_scaled_pwm_percentage(left, XY_DEAD_ZONE, XY_MAX);
 	u16 pwm_right = utils_scaled_pwm_percentage(right, XY_DEAD_ZONE, XY_MAX);
 	if (left < 0) pwm_left += 1;
@@ -112,7 +112,7 @@ void main_engine_advanced(const i16 left, const i16 right) {
 	set_motor_ctrl(right, pwm_right, false);
 }
 
-void main_engine_basic(const i16 gas, const i16 steer) {
+void main_engine_basic(const i32 gas, const i32 steer) {
 	const bool go_left = steer < 0;
 	const bool go_forward = gas > 0;
 	const auto steer_perc = utils_scaled_pwm_percentage(steer, XY_DEAD_ZONE, XY_MAX);
@@ -120,7 +120,7 @@ void main_engine_basic(const i16 gas, const i16 steer) {
 	auto gas_left = gas;
 	auto gas_right = gas;
 
-	i16 *gas_active = go_left ? &gas_left : &gas_right;
+	i32 *gas_active = go_left ? &gas_left : &gas_right;
 
 	const i8 sign = go_forward ? -1 : 1;
 	const u8 steer_baseline = (steer_perc <= 75) ? steer_perc : (steer_perc - 75);

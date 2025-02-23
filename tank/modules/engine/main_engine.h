@@ -7,8 +7,8 @@
 
 void main_engine_init();
 
-void main_engine_advanced(i16 left, i16 right);
+void main_engine_advanced(i32 left, i32 right);
 
-void main_engine_basic(i16 gas, i16 steer);
+void main_engine_basic(i32 gas, i32 steer);
 
 #endif //MAIN_ENGINE_H

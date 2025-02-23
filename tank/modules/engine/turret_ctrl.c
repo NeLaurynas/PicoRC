@@ -65,7 +65,7 @@ static void adjust_pwm(u16 *pwm) {
 	}
 }
 
-static void set_motor_ctrl(const i16 val, const u16 pwm) {
+static void set_motor_ctrl(const i32 val, const u16 pwm) {
 	const u8 pin1 = MOD_TURRET_CTRL_ENABLE1;
 	const u8 pin2 = MOD_TURRET_CTRL_ENABLE2;
 	const u8 dma_ch = MOD_TURRET_CTRL_DMA_CH;
@@ -85,14 +85,14 @@ static void set_motor_ctrl(const i16 val, const u16 pwm) {
 	}
 }
 
-void turret_ctrl_rotate(const i16 val) {
+void turret_ctrl_rotate(const i32 val) {
 	u16 pwm = utils_scaled_pwm_percentage(val, XY_DEAD_ZONE, XY_MAX) * 100;
 	adjust_pwm(&pwm);
 
 	set_motor_ctrl(val, pwm);
 }
 
-void turret_ctrl_lift(const i16 val) {
+void turret_ctrl_lift(const i32 val) {
 	if (abs(val) <= XY_DEAD_ZONE + 200) {
 		gpio_put(MOD_TURRET_CTRL_PWM2, false);
 		gpio_put(MOD_TURRET_CTRL_ENABLE3, false);

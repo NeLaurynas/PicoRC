@@ -7,8 +7,8 @@
 
 void turret_ctrl_init();
 
-void turret_ctrl_rotate(i16 val);
+void turret_ctrl_rotate(i32 val);
 
-void turret_ctrl_lift(i16 val);
+void turret_ctrl_lift(i32 val);
 
 #endif //TURRET_ROTATION_H

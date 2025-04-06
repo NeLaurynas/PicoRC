@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 4.00)
 
-set(PROJECT_NAME "Skeleton")
+set(PROJECT_NAME "Buggy")
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS ON)
@@ -28,10 +28,6 @@ add_executable(${PROJECT_NAME}
 		state.h
 		renderer.c
 		renderer.h
-		modules/engine/turret_rotation.c
-		modules/engine/turret_rotation.h
-		modules/engine/main_engine.c
-		modules/engine/main_engine.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

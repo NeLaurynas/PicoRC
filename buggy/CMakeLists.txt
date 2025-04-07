@@ -28,6 +28,8 @@ add_executable(${PROJECT_NAME}
 		state.h
 		renderer.c
 		renderer.h
+		modules/lights/lights.c
+		modules/lights/lights.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

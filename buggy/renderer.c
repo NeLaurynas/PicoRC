@@ -10,6 +10,7 @@
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "modules/lights/lights.h"
 
 volatile static bool can_set_state = true;
 
@@ -49,10 +50,16 @@ static void render_state() {
 }
 
 static void init() {
-	// turret_rotation_init();
+	lights_init();
+
+	current_state.lights.blinkers_left = true;
+	lights_set_blinkers(true, true);
 }
 
 void renderer_loop() {
+	const void (*animation_functions[])() = { lights_animation };
+	constexpr i32 animation_fn_size = ARRAY_SIZE(animation_functions);
+
 	init();
 
 	// ReSharper disable once CppDFAEndlessLoop
@@ -61,6 +68,7 @@ void renderer_loop() {
 		const auto start = time_us_32();
 
 		render_state();
+		for (auto i = 0; i < animation_fn_size; i++) animation_functions[i]();
 
 		const auto elapsed_us = utils_time_diff_us(start, time_us_32());
 		const auto remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;

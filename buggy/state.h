@@ -26,6 +26,11 @@ typedef struct {
 	bool shoulder_l;
 	bool shoulder_r;
 
+	bool pad_up;
+	bool pad_down;
+	bool pad_left;
+	bool pad_right;
+
 	i32 throttle;
 	i32 brake;
 
@@ -56,6 +61,11 @@ typedef struct {
 
 	bool shoulder_l;
 	bool shoulder_r;
+
+	bool pad_up;
+	bool pad_down;
+	bool pad_left;
+	bool pad_right;
 
 	bool btn_start;
 	bool btn_select;

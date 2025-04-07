@@ -1,4 +1,3 @@
-# Generated from CLion C/C++ Code Style settings
 ---
 Language: Cpp
 BasedOnStyle: LLVM
@@ -45,6 +44,7 @@ IncludeCategories:
     Priority: 3
 IncludeIsMainRegex: '([-_](test|unittest))?$'
 IndentCaseLabels: true
+IndentGotoLabels: false
 IndentWidth: 4
 InsertNewlineAtEOF: true
 MacroBlockBegin: ''

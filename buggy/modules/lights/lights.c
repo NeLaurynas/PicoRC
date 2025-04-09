@@ -17,7 +17,7 @@ static u32 cfg_blinkers_channel_left;
 static u32 cfg_blinkers_slice_right;
 static u32 cfg_blinkers_channel_right;
 
-static u32 state_blinkers_frame = 0;
+static u32 state_blinkers_frame = 0; // why not in global state?
 
 void lights_init() {
 	// init blinkers PWM 1
@@ -43,9 +43,6 @@ void lights_init() {
 }
 
 void lights_set_blinkers(const bool left, const bool on) {
-	if (left) current_state.lights.blinkers_left = on;
-	else current_state.lights.blinkers_right = on;
-
 	if (!on) {
 		if (!current_state.lights.blinkers_left && !current_state.lights.blinkers_right) state_blinkers_frame = 0;
 		if (left) pwm_set_chan_level(cfg_blinkers_slice_left, cfg_blinkers_channel_left, 0);
@@ -54,7 +51,6 @@ void lights_set_blinkers(const bool left, const bool on) {
 }
 
 void lights_inc_head() {
-	// wer
 }
 
 static void blinkers_anim() {
@@ -63,19 +59,18 @@ static void blinkers_anim() {
 	constexpr i32 tim_0 = 7; // fade in until
 	constexpr i32 tim_1 = 50; // hold until
 	constexpr i32 tim_2 = total_frames - 12 - tim_1; // fade out until
-	static i32 frame = 0;
 
-	if (frame < tim_1) {
-		const auto level = utils_proportional_reduce(cfg_blinkers_top, frame, tim_0, false);
+	if (state_blinkers_frame < tim_1) {
+		const auto level = utils_proportional_reduce(cfg_blinkers_top, state_blinkers_frame, tim_0, false);
 		if (current_state.lights.blinkers_left) pwm_set_chan_level(cfg_blinkers_slice_left, cfg_blinkers_channel_left, level);
 		if (current_state.lights.blinkers_right) pwm_set_chan_level(cfg_blinkers_slice_right, cfg_blinkers_channel_right, level);
 	} else {
-		const auto level = utils_proportional_reduce(cfg_blinkers_top, frame - tim_1, tim_2, true);
+		const auto level = utils_proportional_reduce(cfg_blinkers_top, state_blinkers_frame - tim_1, tim_2, true);
 		if (current_state.lights.blinkers_left) pwm_set_chan_level(cfg_blinkers_slice_left, cfg_blinkers_channel_left, level);
 		if (current_state.lights.blinkers_right) pwm_set_chan_level(cfg_blinkers_slice_right, cfg_blinkers_channel_right, level);
 	}
 
-	frame = (frame + 1) % total_frames;
+	state_blinkers_frame = (state_blinkers_frame + 1) % total_frames;
 }
 
 void lights_animation() {

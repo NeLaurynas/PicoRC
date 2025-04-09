@@ -21,6 +21,10 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (state.btn_x != (gamepad->buttons & BUTTON_X)) state.btn_x = (gamepad->buttons & BUTTON_X);
 	if (state.btn_b != (gamepad->buttons & BUTTON_B)) state.btn_b = (gamepad->buttons & BUTTON_B);
 	if (state.btn_y != (gamepad->buttons & BUTTON_Y)) state.btn_y = (gamepad->buttons & BUTTON_Y);
+	if (state.pad_left != (gamepad->dpad & DPAD_LEFT)) state.pad_left = (gamepad->dpad & DPAD_LEFT);
+	if (state.pad_right != (gamepad->dpad & DPAD_RIGHT)) state.pad_right = (gamepad->dpad & DPAD_RIGHT);
+	if (state.pad_up != (gamepad->dpad & DPAD_UP)) state.pad_up = (gamepad->dpad & DPAD_UP);
+	if (state.pad_down != (gamepad->dpad & DPAD_DOWN)) state.pad_down = (gamepad->dpad & DPAD_DOWN);
 
 	if (state.brake != gamepad->brake) state.brake = gamepad->brake;
 	if (state.throttle != gamepad->throttle) state.throttle = gamepad->throttle;
@@ -38,7 +42,22 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 }
 
 static void render_state() {
-	// get early
+	if (current_state.pad_left != state.pad_left) {
+		if (state.pad_left) {
+			current_state.lights.blinkers_left = !current_state.lights.blinkers_left;
+			lights_set_blinkers(true, current_state.lights.blinkers_left);
+		}
+		current_state.pad_left = state.pad_left;
+	}
+
+	if (current_state.pad_right != state.pad_right) {
+		if (state.pad_right) {
+			current_state.lights.blinkers_right = !current_state.lights.blinkers_right;
+			lights_set_blinkers(false, current_state.lights.blinkers_right);
+		}
+		current_state.pad_right = state.pad_right;
+	}
+
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a) {
 			utils_printf("!!!! pressed btn A\n");
@@ -51,9 +70,6 @@ static void render_state() {
 
 static void init() {
 	lights_init();
-
-	current_state.lights.blinkers_left = true;
-	lights_set_blinkers(true, true);
 }
 
 void renderer_loop() {

@@ -37,9 +37,6 @@ typedef struct {
 	bool full_beans;
 
 	struct {
-		bool blinkers_left;
-		bool blinkers_right;
-
 		i32 head;
 		i32 tail;
 

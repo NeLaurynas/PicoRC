@@ -42,6 +42,7 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 }
 
 static void render_state() {
+	// --- DPAD
 	if (current_state.pad_left != state.pad_left) {
 		if (state.pad_left) {
 			current_state.lights.blinkers_left = !current_state.lights.blinkers_left;
@@ -58,6 +59,29 @@ static void render_state() {
 		current_state.pad_right = state.pad_right;
 	}
 
+	if (current_state.pad_up != state.pad_up) {
+		if (state.pad_up) {
+			current_state.lights.head = (current_state.lights.head + 1) % 3;
+			lights_head_up();
+		}
+		current_state.pad_up = state.pad_up;
+	}
+
+	if (current_state.pad_down != state.pad_down) {
+		if (state.pad_down) state.lights.tail = !state.lights.tail;
+		current_state.pad_down = state.pad_down;
+	}
+
+	// --- THROTTLE and BRAKE
+	if (current_state.brake != state.brake || current_state.throttle != state.throttle) {
+		const auto level = state.throttle - state.brake;
+		if (level + TRIG_DEAD_ZONE < 0) state.lights.braking = true;
+		else state.lights.braking = false;
+		// engines_drive((state.throttle - state.brake) * -1);
+		current_state.brake = state.brake;
+		current_state.throttle = state.throttle;
+	}
+
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a) {
 			utils_printf("!!!! pressed btn A\n");
@@ -65,6 +89,12 @@ static void render_state() {
 		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
 		// toggle?
 		current_state.btn_a = state.btn_a;
+	}
+
+	if (current_state.lights.tail != state.lights.tail || current_state.lights.braking != state.lights.braking) {
+		current_state.lights.tail = state.lights.tail;
+		current_state.lights.braking = state.lights.braking;
+		lights_tail();
 	}
 }
 

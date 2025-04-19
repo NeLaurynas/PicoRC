@@ -30,6 +30,8 @@ add_executable(${PROJECT_NAME}
 		renderer.h
 		modules/lights/lights.c
 		modules/lights/lights.h
+		modules/engines/engines.c
+		modules/engines/engines.h
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE

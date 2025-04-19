@@ -10,6 +10,7 @@
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "modules/engines/engines.h"
 #include "modules/lights/lights.h"
 
 volatile static bool can_set_state = true;
@@ -21,6 +22,11 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (state.btn_x != (gamepad->buttons & BUTTON_X)) state.btn_x = (gamepad->buttons & BUTTON_X);
 	if (state.btn_b != (gamepad->buttons & BUTTON_B)) state.btn_b = (gamepad->buttons & BUTTON_B);
 	if (state.btn_y != (gamepad->buttons & BUTTON_Y)) state.btn_y = (gamepad->buttons & BUTTON_Y);
+
+	if (state.btn_start != (gamepad->misc_buttons & MISC_BUTTON_START)) state.btn_start = (gamepad->misc_buttons & MISC_BUTTON_START);
+	if (state.btn_select != (gamepad->misc_buttons & MISC_BUTTON_SELECT)) state.btn_select = (gamepad->misc_buttons &
+		MISC_BUTTON_SELECT);
+
 	if (state.pad_left != (gamepad->dpad & DPAD_LEFT)) state.pad_left = (gamepad->dpad & DPAD_LEFT);
 	if (state.pad_right != (gamepad->dpad & DPAD_RIGHT)) state.pad_right = (gamepad->dpad & DPAD_RIGHT);
 	if (state.pad_up != (gamepad->dpad & DPAD_UP)) state.pad_up = (gamepad->dpad & DPAD_UP);
@@ -30,13 +36,6 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	if (state.throttle != gamepad->throttle) state.throttle = gamepad->throttle;
 
 	if (state.x != gamepad->axis_x) state.x = gamepad->axis_x;
-	if (state.y != gamepad->axis_y) state.y = gamepad->axis_y;
-
-	if (state.rx != gamepad->axis_rx) {
-		state.rx = gamepad->axis_rx;
-		// turret_rotation_rotate(state.rx);
-	}
-	if (state.ry != gamepad->axis_ry) state.ry = gamepad->axis_ry;
 
 	can_set_state = false;
 }
@@ -67,6 +66,15 @@ static void render_state() {
 		current_state.pad_up = state.pad_up;
 	}
 
+	if (current_state.btn_start != state.btn_start || current_state.btn_select != state.btn_select) {
+		current_state.btn_start = state.btn_start;
+		current_state.btn_select = state.btn_select;
+		if (state.btn_start && state.btn_select) {
+			current_state.full_beans = !current_state.full_beans;
+			utils_printf("SET FULL BEANS: %d\n", current_state.full_beans);
+		}
+	}
+
 	if (current_state.pad_down != state.pad_down) {
 		if (state.pad_down) state.lights.tail = !state.lights.tail;
 		current_state.pad_down = state.pad_down;
@@ -77,17 +85,21 @@ static void render_state() {
 		const auto level = state.throttle - state.brake;
 		if (level + TRIG_DEAD_ZONE < 0) state.lights.braking = true;
 		else state.lights.braking = false;
-		// engines_drive((state.throttle - state.brake) * -1);
+		engines_drive(state.throttle - state.brake);
 		current_state.brake = state.brake;
 		current_state.throttle = state.throttle;
+	}
+
+	if (current_state.x != state.x) {
+		engines_steer(state.x);
+		current_state.x = state.x;
 	}
 
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a) {
 			utils_printf("!!!! pressed btn A\n");
+			// TODO: hand brake!
 		}
-		// cyw43_arch_gpio_put(INTERNAL_LED, btn); // this will fuck you up, cyw43 can be used only from thread it was init'ed
-		// toggle?
 		current_state.btn_a = state.btn_a;
 	}
 
@@ -100,8 +112,10 @@ static void render_state() {
 
 static void init() {
 	lights_init();
+	engines_init();
 }
 
+[[noreturn]]
 void renderer_loop() {
 	const void (*animation_functions[])() = { lights_animation };
 	constexpr i32 animation_fn_size = ARRAY_SIZE(animation_functions);

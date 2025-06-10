@@ -28,6 +28,13 @@ typedef int8_t i8;
 #define MOD_MCP_ADDR1		0x20
 #define MOD_MCP_ADDR2		0x21
 #define MOD_MCP_GPIO_CACHE_MS 6
+#define MOD_MCP_WRITE_RETRY_COUNT 1
+
+#define MOD_WSLEDS_LED_COUNT 0
+#define MOD_WSLEDS_DMA_CH 0
+#define MOD_WSLEDS_PIO pio0
+#define MOD_WSLEDS_SM 0
+#define MOD_WSLEDS_PIN 0
 
 // MISC
 #define INTERNAL_LED 0

@@ -40,11 +40,33 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
 )
 
-# pico-shared
-add_subdirectory(../lib/pico-shared ${CMAKE_BINARY_DIR}/pico-shared)
-target_link_libraries(${PROJECT_NAME} pico-shared)
 # minimp3
 #include_directories(${CMAKE_SOURCE_DIR}/../lib/minimp3)
+
+# Create a private copy of the library inside the build tree and replace
+set(PICO_SHARED_COPY_PARENT ${CMAKE_BINARY_DIR}/pico-shared_src)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared DESTINATION ${PICO_SHARED_COPY_PARENT})
+set(PICO_SHARED_SRC_COPY ${PICO_SHARED_COPY_PARENT}/pico-shared)
+
+configure_file(
+		${CMAKE_CURRENT_SOURCE_DIR}/shared_config.h
+		${PICO_SHARED_SRC_COPY}/shared_config.h
+		COPYONLY
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${PICO_SHARED_SRC_COPY}
+)
+
+# target_include_directories(${PROJECT_NAME} PRIVATE
+# 		${CMAKE_CURRENT_SOURCE_DIR}
+# 		${BLUEPAD32_ROOT}/src/components/bluepad32/include
+# 		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
+# )
+
+add_subdirectory(${PICO_SHARED_SRC_COPY} ${CMAKE_BINARY_DIR}/pico-shared)
+target_link_libraries(${PROJECT_NAME} pico-shared)
 
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} "0.1")

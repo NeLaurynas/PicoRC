@@ -37,7 +37,6 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${BLUEPAD32_ROOT}/src/components/bluepad32/include
-		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
 )
 
 # minimp3
@@ -58,12 +57,6 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${PICO_SHARED_SRC_COPY}
 )
-
-# target_include_directories(${PROJECT_NAME} PRIVATE
-# 		${CMAKE_CURRENT_SOURCE_DIR}
-# 		${BLUEPAD32_ROOT}/src/components/bluepad32/include
-# 		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
-# )
 
 add_subdirectory(${PICO_SHARED_SRC_COPY} ${CMAKE_BINARY_DIR}/pico-shared)
 target_link_libraries(${PROJECT_NAME} pico-shared)

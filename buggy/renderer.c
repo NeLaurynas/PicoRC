@@ -1,17 +1,17 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <stdlib.h>
 #include <hardware/timer.h>
 #include <pico/cyw43_arch.h>
-#include <stdlib.h>
 
-#include "defines/config.h"
 #include "renderer.h"
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "defines/config.h"
 #include "modules/engines/engines.h"
-#include "modules/lights/lights.h"
+#include "shared_modules/v_monitor/v_monitor.h"
 
 volatile static bool can_set_state = true;
 
@@ -45,7 +45,7 @@ static void render_state() {
 	if (current_state.pad_left != state.pad_left) {
 		if (state.pad_left) {
 			current_state.lights.blinkers_left = !current_state.lights.blinkers_left;
-			lights_set_blinkers(true, current_state.lights.blinkers_left);
+			// lights_set_blinkers(true, current_state.lights.blinkers_left);
 		}
 		current_state.pad_left = state.pad_left;
 	}
@@ -53,7 +53,7 @@ static void render_state() {
 	if (current_state.pad_right != state.pad_right) {
 		if (state.pad_right) {
 			current_state.lights.blinkers_right = !current_state.lights.blinkers_right;
-			lights_set_blinkers(false, current_state.lights.blinkers_right);
+			// lights_set_blinkers(false, current_state.lights.blinkers_right);
 		}
 		current_state.pad_right = state.pad_right;
 	}
@@ -61,7 +61,7 @@ static void render_state() {
 	if (current_state.pad_up != state.pad_up) {
 		if (state.pad_up) {
 			current_state.lights.head = (current_state.lights.head + 1) % 3;
-			lights_head_up();
+			// lights_head_up();
 		}
 		current_state.pad_up = state.pad_up;
 	}
@@ -106,18 +106,18 @@ static void render_state() {
 	if (current_state.lights.tail != state.lights.tail || current_state.lights.braking != state.lights.braking) {
 		current_state.lights.tail = state.lights.tail;
 		current_state.lights.braking = state.lights.braking;
-		lights_tail();
+		// lights_tail();
 	}
 }
 
 static void init() {
-	lights_init();
+	v_monitor_init();
+	// lights_init();
 	engines_init();
 }
 
-[[noreturn]]
 void renderer_loop() {
-	const void (*animation_functions[])() = { lights_animation };
+	const void (*animation_functions[])() = { v_monitor_anim };
 	constexpr i32 animation_fn_size = ARRAY_SIZE(animation_functions);
 
 	init();
@@ -135,5 +135,20 @@ void renderer_loop() {
 
 		// utils_printf("x\n");
 		if (remaining_us > 0) sleep_us(remaining_us);
+
+		static constexpr i32 TICKS = 50; // every 100 or 200 ms
+		static i32 frame = 0;
+
+		if (frame == 0) {
+			const auto voltage = v_monitor_voltage(false);
+			if (voltage < 10.5f) {
+				// shut down...
+				engines_drive(0);
+				engines_steer(0);
+				return;
+			}
+		}
+
+		frame = (frame + 1) % TICKS;
 	}
 }

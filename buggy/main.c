@@ -27,10 +27,10 @@ int main() {
 	set_sys_clock_khz(48'000, false);
 
 	stdio_init_all();
+	sleep_ms(4000);
 
 #if DBG
-	sleep_ms(5000);
-	printf("Slept for 5 secondss\n");
+	printf("let'sa go\n");
 #endif
 
 	// initialize CYW43 driver architecture (will enable BT if/because CYW43_ENABLE_BLUETOOTH == 1)

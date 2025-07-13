@@ -141,7 +141,7 @@ void renderer_loop() {
 
 		if (frame == 0) {
 			const auto voltage = v_monitor_voltage(false);
-			if (voltage < 10.5f) {
+			if (voltage < MOD_VMON_DEFAULT_REF) {
 				// shut down...
 				engines_drive(0);
 				engines_steer(0);

@@ -107,15 +107,10 @@ static inline float beans_reduce() {
 
 
 static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
-	u8 pin1 = drive_engine ? MOD_ENGINES_ENABLE_DRIVE_1 : MOD_ENGINES_ENABLE_STEER;
-	const u8 dma_ch = drive_engine ? MOD_ENGINES_DMA_1 : MOD_ENGINES_DMA_2;
+	static constexpr u16 pwm_zero = 0;
 
 	if (drive_engine) {
 		pwm = (u16)((float)pwm * beans_reduce());
-	}
-
-	if (drive_engine) {
-		const u16 pwm_zero = 0;
 		if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
@@ -131,15 +126,15 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 		}
 	} else {
 		if (val < 0) {
-			gpio_put(pin1, false);
-			dma_channel_transfer_from_buffer_now(dma_ch, &pwm, 1);
+			gpio_put(MOD_ENGINES_ENABLE_STEER, false);
+			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
 		} else {
-			gpio_put(pin1, val != 0);
-			dma_channel_transfer_from_buffer_now(dma_ch, &pwm, 1);
+			gpio_put(MOD_ENGINES_ENABLE_STEER, val != 0);
+			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
 		}
 	}
 
-	utils_printf("pinL %d, val: %d, pwm: %d\n", pin1, val, pwm);
+	utils_printf("val: %d, pwm: %d\n", val, pwm);
 }
 
 void engines_drive(const i32 val) {

@@ -34,8 +34,6 @@ typedef struct {
 	i32 throttle;
 	i32 brake;
 
-	bool full_beans;
-
 	struct {
 		bool braking;
 		i32 tail;

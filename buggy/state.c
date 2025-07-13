@@ -4,4 +4,4 @@
 #include "state.h"
 
 volatile State state = { 0 };
-volatile CurrentState current_state = { 0 };
+volatile CurrentState current_state = { .full_beans = false };

@@ -99,18 +99,20 @@ static void adjust_pwm(i32 *pwm) {
 	*pwm = (i32)out;
 }
 
-static inline float beans_reduce() {
+static inline float beans_reduce_by_battery_level() {
 	const float voltage = v_monitor_voltage(false);
-	constexpr float limit = MOD_VMON_DEFAULT_REF + 0.3f;
+	constexpr float limit = MOD_VMON_DEFAULT_REF + 0.25f;
 	return (voltage <= limit) ? 1.0f : (limit / voltage);
 }
 
-
 static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 	static constexpr u16 pwm_zero = 0;
+	static constexpr float not_full_beans_reduce = 0.5f;
+
+	pwm = (u16)((float)pwm * beans_reduce_by_battery_level());
 
 	if (drive_engine) {
-		pwm = (u16)((float)pwm * beans_reduce());
+		if (!current_state.full_beans) pwm = (u16)((float)pwm * not_full_beans_reduce);
 		if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
@@ -125,7 +127,7 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
 		}
 	} else {
-		if (val < 0) {
+		if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_STEER, false);
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
 		} else {

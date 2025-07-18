@@ -1,10 +1,9 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 4.00)
 
 set(PROJECT_NAME "Firetruck")
 
 set(CMAKE_C_STANDARD 23)
 set(CMAKE_C_EXTENSIONS ON)
-#set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 set(PICO_BOARD pico2_w CACHE STRING "Board type")
@@ -40,14 +39,29 @@ add_executable(${PROJECT_NAME}
 target_include_directories(${PROJECT_NAME} PRIVATE
 		${CMAKE_CURRENT_SOURCE_DIR}
 		${BLUEPAD32_ROOT}/src/components/bluepad32/include
-		${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared
 )
 
-# pico-shared
-add_subdirectory(../lib/pico-shared ${CMAKE_BINARY_DIR}/pico-shared)
-target_link_libraries(${PROJECT_NAME} pico-shared)
 # minimp3
-include_directories(${CMAKE_SOURCE_DIR}/../lib/minimp3)
+#include_directories(${CMAKE_SOURCE_DIR}/../lib/minimp3)
+
+# Create a private copy of the library inside the build tree and replace
+set(PICO_SHARED_COPY_PARENT ${CMAKE_BINARY_DIR}/pico-shared_src)
+file(COPY ${CMAKE_CURRENT_LIST_DIR}/../lib/pico-shared DESTINATION ${PICO_SHARED_COPY_PARENT})
+set(PICO_SHARED_SRC_COPY ${PICO_SHARED_COPY_PARENT}/pico-shared)
+
+configure_file(
+		${CMAKE_CURRENT_SOURCE_DIR}/shared_config.h
+		${PICO_SHARED_SRC_COPY}/shared_config.h
+		COPYONLY
+)
+
+target_include_directories(${PROJECT_NAME} PRIVATE
+		${CMAKE_CURRENT_SOURCE_DIR}
+		${PICO_SHARED_SRC_COPY}
+)
+
+add_subdirectory(${PICO_SHARED_SRC_COPY} ${CMAKE_BINARY_DIR}/pico-shared)
+target_link_libraries(${PROJECT_NAME} pico-shared)
 
 pico_set_program_name(${PROJECT_NAME} "${PROJECT_NAME}")
 pico_set_program_version(${PROJECT_NAME} "0.1")
@@ -69,7 +83,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE
 		-mthumb
 		-ffunction-sections
 		-fdata-sections
-#		-DNDEBUG # comment out sometime
 		>
 
 		$<$<CONFIG:Release>:
@@ -105,7 +118,6 @@ target_link_options(${PROJECT_NAME} PRIVATE
 		-mthumb
 		-Wl,--gc-sections
 )
-target_link_options(${PROJECT_NAME} PRIVATE -static-libubsan)
 
 # Generate PIO headers
 #pico_generate_pio_header(${PROJECT_NAME} ${CMAKE_CURRENT_LIST_DIR}/modules/numbers/pio_numbers.pio)
@@ -161,6 +173,6 @@ if (CMAKE_BUILD_TYPE STREQUAL "Debug")
 	add_custom_command(
 			TARGET ${PROJECT_NAME}
 			POST_BUILD
-			COMMAND /usr/local/bin/openocd -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000" -c "program ${PROJECT_NAME}.elf reset exit"
+			COMMAND /usr/local/bin/openocd -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c "adapter speed 5000" -c "program ${PROJECT_NAME}.elf verify reset exit"
 	)
 endif ()

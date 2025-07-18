@@ -21,13 +21,13 @@
 struct uni_platform* get_rc_platform(void);
 
 int main() {
-	set_sys_clock_khz(18'000, false);
+	set_sys_clock_khz(48'000, false);
 
 	stdio_init_all();
+	sleep_ms(4000);
 
 #if DBG
-	sleep_ms(3000);
-	utils_printf("slept for 3 secondss\n");
+	utils_printf("slept for 4 secondss\n");
 #endif
 
 	// initialize CYW43 driver architecture (will enable BT if/because CYW43_ENABLE_BLUETOOTH == 1)

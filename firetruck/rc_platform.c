@@ -35,8 +35,10 @@ static void rc_platform_on_init_complete(void) {
 
 	uni_bt_start_scanning_and_autoconnect_unsafe();
 
-	// uni_bt_del_keys_unsafe();
-	uni_bt_list_keys_unsafe();
+	uni_bt_del_keys_unsafe();
+	uni_bt_bredr_delete_bonded_keys();
+	uni_bt_le_delete_bonded_keys();
+
 
 	cyw43_arch_gpio_put(CYW43_WL_GPIO_LED_PIN, 0);
 }

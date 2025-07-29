@@ -107,13 +107,15 @@ static inline float beans_reduce_by_battery_level() {
 
 static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 	static constexpr u16 pwm_zero = 0;
-	static constexpr float steer_beans_reduce = 0.92f;
-	static constexpr float not_full_beans_reduce = 0.55f;
+	static constexpr float steer_beans_reduce = 0.50f;
+	static constexpr float not_full_beans_reduce = 0.45f;
+	static constexpr float full_beans_reduce = 0.75f;
 
 	pwm = (u16)((float)pwm * beans_reduce_by_battery_level());
 
 	if (drive_engine) {
 		if (!current_state.full_beans) pwm = (u16)((float)pwm * not_full_beans_reduce);
+		else pwm = (u16)((float)pwm * full_beans_reduce);
 		if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
@@ -129,7 +131,7 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 		}
 	} else {
 		pwm = (u16)((float)pwm * steer_beans_reduce);
-		if (val > 0) {
+		if (val < 0) {
 			gpio_put(MOD_ENGINES_ENABLE_STEER, false);
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
 		} else {
@@ -137,6 +139,8 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
 		}
 	}
+	// never give DMA a pointer to stack memory unless that memory is guaranteed to stay valid for the entire transfer.
+	sleep_us(500);
 }
 
 void engines_drive(const i32 val) {

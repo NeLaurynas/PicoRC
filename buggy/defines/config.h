@@ -17,9 +17,6 @@
 #define MOD_LIGHTS_HEAD				18
 #define MOD_LIGHTS_TAIL				19
 
-#define MOD_ENGINES_DMA_1		2
-#define MOD_ENGINES_DMA_2		3
-#define MOD_ENGINES_DMA_3		4
 #define MOD_ENGINES_PWM_1		15
 #define MOD_ENGINES_PWM_2		11
 #define MOD_ENGINES_PWM_3		17

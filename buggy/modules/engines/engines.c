@@ -6,10 +6,8 @@
 #include "state.h"
 #include "utils.h"
 #include "defines/config.h"
-#include "hardware/dma.h"
 #include "hardware/gpio.h"
 #include "hardware/pwm.h"
-#include "pico/time.h"
 #include "shared_modules/v_monitor/v_monitor.h"
 
 static u16 slice1, slice2, slice3 = 0;
@@ -58,34 +56,6 @@ void engines_init() {
 	pwm_set_phase_correct(slice3, false);
 	pwm_set_enabled(slice3, true);
 
-	// init DMA
-	if (dma_channel_is_claimed(MOD_ENGINES_DMA_1)) utils_error_mode(10);
-	dma_channel_claim(MOD_ENGINES_DMA_1);
-	auto dma_c1 = dma_channel_get_default_config(MOD_ENGINES_DMA_1);
-	channel_config_set_transfer_data_size(&dma_c1, DMA_SIZE_16);
-	channel_config_set_read_increment(&dma_c1, false);
-	channel_config_set_write_increment(&dma_c1, false);
-	channel_config_set_dreq(&dma_c1, DREQ_FORCE);
-	dma_channel_configure(MOD_ENGINES_DMA_1, &dma_c1, utils_pwm_cc_for_16bit(slice1, channel1), nullptr, 1, false);
-
-	if (dma_channel_is_claimed(MOD_ENGINES_DMA_2)) utils_error_mode(11);
-	dma_channel_claim(MOD_ENGINES_DMA_2);
-	auto dma_c2 = dma_channel_get_default_config(MOD_ENGINES_DMA_2);
-	channel_config_set_transfer_data_size(&dma_c2, DMA_SIZE_16);
-	channel_config_set_read_increment(&dma_c2, false);
-	channel_config_set_write_increment(&dma_c2, false);
-	channel_config_set_dreq(&dma_c2, DREQ_FORCE);
-	dma_channel_configure(MOD_ENGINES_DMA_2, &dma_c2, utils_pwm_cc_for_16bit(slice2, channel2), nullptr, 1, false);
-
-	if (dma_channel_is_claimed(MOD_ENGINES_DMA_3)) utils_error_mode(12);
-	dma_channel_claim(MOD_ENGINES_DMA_3);
-	auto dma_c3 = dma_channel_get_default_config(MOD_ENGINES_DMA_3);
-	channel_config_set_transfer_data_size(&dma_c3, DMA_SIZE_16);
-	channel_config_set_read_increment(&dma_c3, false);
-	channel_config_set_write_increment(&dma_c3, false);
-	channel_config_set_dreq(&dma_c3, DREQ_FORCE);
-	dma_channel_configure(MOD_ENGINES_DMA_3, &dma_c3, utils_pwm_cc_for_16bit(slice3, channel3), nullptr, 1, false);
-	sleep_ms(1);
 }
 
 static void adjust_pwm(i32 *pwm) {
@@ -116,31 +86,25 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 	if (drive_engine) {
 		if (!current_state.full_beans) pwm = (u16)((float)pwm * not_full_beans_reduce);
 		else pwm = (u16)((float)pwm * full_beans_reduce);
+
 		if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_1, &pwm, 1);
+			pwm_set_chan_level(slice3, channel3, pwm_zero);
+			pwm_set_chan_level(slice1, channel1, pwm);
 		} else if (val < 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_1, &pwm_zero, 1);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm, 1);
+			pwm_set_chan_level(slice1, channel1, pwm_zero);
+			pwm_set_chan_level(slice3, channel3, pwm);
 		} else {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, false);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_1, &pwm_zero, 1);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_3, &pwm_zero, 1);
+			pwm_set_chan_level(slice1, channel1, pwm_zero);
+			pwm_set_chan_level(slice3, channel3, pwm_zero);
 		}
 	} else {
 		pwm = (u16)((float)pwm * steer_beans_reduce);
-		if (val < 0) {
-			gpio_put(MOD_ENGINES_ENABLE_STEER, false);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
-		} else {
-			gpio_put(MOD_ENGINES_ENABLE_STEER, val != 0);
-			dma_channel_transfer_from_buffer_now(MOD_ENGINES_DMA_2, &pwm, 1);
-		}
+		gpio_put(MOD_ENGINES_ENABLE_STEER, val != 0);
+		pwm_set_chan_level(slice2, channel2, pwm);
 	}
-	// never give DMA a pointer to stack memory unless that memory is guaranteed to stay valid for the entire transfer.
-	sleep_us(500);
 }
 
 void engines_drive(const i32 val) {

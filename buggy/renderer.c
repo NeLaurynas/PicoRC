@@ -122,7 +122,6 @@ void renderer_loop() {
 
 	init();
 
-	// ReSharper disable once CppDFAEndlessLoop
 	for (;;) {
 		can_set_state = true;
 		const auto start = time_us_32();

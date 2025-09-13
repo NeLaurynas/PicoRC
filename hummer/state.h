@@ -37,8 +37,6 @@ typedef struct {
 	struct {
 		bool braking;
 		i32 tail;
-
-		bool siren;
 	} lights;
 } State;
 
@@ -78,7 +76,7 @@ typedef struct {
 		i32 head;
 		i32 tail;
 
-		bool siren;
+		bool hazards;
 	} lights;
 } CurrentState;
 

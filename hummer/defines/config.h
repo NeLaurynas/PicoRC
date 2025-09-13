@@ -12,10 +12,12 @@
 #define TRIG_DEAD_ZONE 10
 #define TRIG_MAX 1000
 
-#define MOD_LIGHTS_BLINKERS_LEFT   18
-#define MOD_LIGHTS_BLINKERS_RIGHT  20
-#define MOD_LIGHTS_HEAD            22
-#define MOD_LIGHTS_TAIL            12 // two 200 Ω resistors from + to led
+#define MOD_LIGHTS_BLINKERS_LEFT	18
+#define MOD_LIGHTS_BLINKERS_RIGHT	20 // 150 Ω
+#define MOD_LIGHTS_HEAD				22 // 100 Ω
+#define MOD_LIGHTS_BEAM				16 // 100 Ω
+#define MOD_LIGHTS_TAIL				12 // 200 Ω resistor from + to each LED
+// TODO: reverse light
 
 #define MOD_ENGINES_PWM_1		15
 #define MOD_ENGINES_PWM_2		11

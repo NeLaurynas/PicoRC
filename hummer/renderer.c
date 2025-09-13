@@ -16,7 +16,7 @@
 
 volatile static bool can_set_state = true;
 
-void renderer_set_state(uni_gamepad_t *gamepad) {
+void renderer_set_state(const uni_gamepad_t *gamepad) {
 	if (!can_set_state) return;
 
 	if (state.btn_a != (gamepad->buttons & BUTTON_A)) state.btn_a = (gamepad->buttons & BUTTON_A);
@@ -41,20 +41,53 @@ void renderer_set_state(uni_gamepad_t *gamepad) {
 	can_set_state = false;
 }
 
+static inline void blinkers_off(void) {
+	current_state.lights.blinkers_left = false;
+	current_state.lights.blinkers_right = false;
+	lights_set_blinkers(true, false);
+	lights_set_blinkers(false, false);
+}
+
+static inline void set_hazards(const bool on) {
+	current_state.lights.hazards = on;
+	blinkers_off();
+}
+
+static inline void set_blinker(const bool left, const bool on) {
+	if (on) set_hazards(false);
+	current_state.lights.blinkers_left = left ? on : false;
+	current_state.lights.blinkers_right = left ? false : on;
+	lights_set_blinkers(true, current_state.lights.blinkers_left);
+	lights_set_blinkers(false, current_state.lights.blinkers_right);
+}
+
 static void render_state() {
 	// --- DPAD
+	if (current_state.pad_down != state.pad_down) {
+		if (state.pad_down) {
+			if (current_state.lights.hazards) set_hazards(false);
+			else if (current_state.lights.blinkers_left || current_state.lights.blinkers_right) blinkers_off();
+			else set_hazards(true);
+		}
+		current_state.pad_down = state.pad_down;
+	}
+
 	if (current_state.pad_left != state.pad_left) {
 		if (state.pad_left) {
-			current_state.lights.blinkers_left = !current_state.lights.blinkers_left;
-			// lights_set_blinkers(true, current_state.lights.blinkers_left);
+			if (current_state.lights.hazards) set_hazards(false);
+			else if (current_state.lights.blinkers_right) set_blinker(false, false);
+			else set_blinker(true, !current_state.lights.blinkers_left);
+
 		}
 		current_state.pad_left = state.pad_left;
 	}
 
 	if (current_state.pad_right != state.pad_right) {
 		if (state.pad_right) {
-			current_state.lights.blinkers_right = !current_state.lights.blinkers_right;
-			// lights_set_blinkers(false, current_state.lights.blinkers_right);
+			if (current_state.lights.hazards) set_hazards(false);
+			else if (current_state.lights.blinkers_left) set_blinker(true, false);
+			else set_blinker(false, !current_state.lights.blinkers_right);
+
 		}
 		current_state.pad_right = state.pad_right;
 	}
@@ -62,7 +95,8 @@ static void render_state() {
 	if (current_state.pad_up != state.pad_up) {
 		if (state.pad_up) {
 			current_state.lights.head = (current_state.lights.head + 1) % 3;
-			// lights_head_up();
+			state.lights.tail = current_state.lights.head > 0 ? true : false;
+			lights_head_up();
 		}
 		current_state.pad_up = state.pad_up;
 	}
@@ -76,16 +110,10 @@ static void render_state() {
 		}
 	}
 
-	if (current_state.pad_down != state.pad_down) {
-		if (state.pad_down) state.lights.tail = !state.lights.tail;
-		current_state.pad_down = state.pad_down;
-	}
-
 	// --- THROTTLE and BRAKE
 	if (current_state.brake != state.brake || current_state.throttle != state.throttle) {
 		const auto level = state.throttle - state.brake;
-		if (level + TRIG_DEAD_ZONE < 0) state.lights.braking = true;
-		else state.lights.braking = false;
+		state.lights.braking = level + TRIG_DEAD_ZONE < 0 ? true : false;
 		engines_drive(state.throttle - state.brake);
 		current_state.brake = state.brake;
 		current_state.throttle = state.throttle;
@@ -133,7 +161,6 @@ void renderer_loop() {
 		const auto elapsed_us = utils_time_diff_us(start, time_us_32());
 		const auto remaining_us = elapsed_us > RENDER_TICK ? 0 : RENDER_TICK - elapsed_us;
 
-		// utils_printf("x\n");
 		if (remaining_us > 0) sleep_us(remaining_us);
 
 		static constexpr i32 TICKS = 50; // every 100 or 200 ms
@@ -146,6 +173,7 @@ void renderer_loop() {
 		// 		// shut down...
 		// 		engines_drive(0);
 		// 		engines_steer(0);
+		//		// TODO: lights also off
 		// 		return;
 		// 	}
 		// }

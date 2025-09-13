@@ -1,0 +1,10 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="HummerDBG" type="com.jetbrains.cidr.embedded.customgdbserver.type" factoryName="com.jetbrains.cidr.embedded.customgdbserver.factory" PROGRAM_PARAMS=" -s tcl -f interface/cmsis-dap.cfg -f target/rp2350.cfg -c &quot;adapter speed 5000&quot;" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" PROJECT_NAME="Hummer" TARGET_NAME="Hummer" CONFIG_NAME="Debug" version="1" RUN_TARGET_PROJECT_NAME="Hummer" RUN_TARGET_NAME="Hummer">
+    <custom-gdb-server version="1" gdb-connect="localhost:3333" executable="/usr/local/bin/openocd" warmup-ms="0" download-type="NONE" reset-cmd="monitor reset" reset-type="AFTER_DOWNLOAD">
+      <debugger kind="GDB">/opt/homebrew/bin/arm-none-eabi-gdb</debugger>
+    </custom-gdb-server>
+    <method v="2">
+      <option name="CLION.COMPOUND.BUILD" enabled="true" />
+    </method>
+  </configuration>
+</component>

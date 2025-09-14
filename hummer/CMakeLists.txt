@@ -13,7 +13,7 @@ set(BTSTACK_ROOT ${PICO_SDK_PATH}/lib/btstack)
 
 add_compile_definitions(PICO_FLASH_ASSERT_ON_UNSAFE=0)
 
-include(pico_sdk_import.cmake)
+include($ENV{PICO_SDK_PATH}/external/pico_sdk_import.cmake)
 
 project(${PROJECT_NAME} C CXX ASM)
 
@@ -151,6 +151,7 @@ target_link_libraries(${PROJECT_NAME}
 		hardware_adc
 		hardware_dma
 		hardware_pwm
+		hardware_irq
 		#		pico_rand
 		$<$<CONFIG:Debug>:hardware_uart>
 )

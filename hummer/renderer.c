@@ -9,6 +9,7 @@
 #include "shared_config.h"
 #include "state.h"
 #include "utils.h"
+#include "cmake-build-debug/pico-shared_src/pico-shared/shared_modules/cpu_cores/cpu_cores.h"
 #include "defines/config.h"
 #include "modules/engines/engines.h"
 #include "modules/lights/lights.h"
@@ -167,16 +168,17 @@ void renderer_loop() {
 		static i32 frame = 0;
 
 		// todo: uncomment...
-		// if (frame == 0) {
-		// 	const auto voltage = v_monitor_voltage(false);
-		// 	if (voltage < MOD_VMON_DEFAULT_REF) {
-		// 		// shut down...
-		// 		engines_drive(0);
-		// 		engines_steer(0);
-		//		// TODO: lights also off
-		// 		return;
-		// 	}
-		// }
+		 // if (frame == 0) {
+		 	// const auto voltage = v_monitor_voltage(false);
+		 	// if (voltage < MOD_VMON_DEFAULT_REF) {
+		 		// shut down...
+		 		// engines_drive(0);
+		 		// engines_steer(0);
+		 		// cpu_cores_send_shutdown_to_core0_from_core1();
+				// TODO: lights also off
+		 		// return;
+		 	// }
+		 // }
 
 		frame = (frame + 1) % TICKS;
 	}

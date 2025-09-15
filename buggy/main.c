@@ -14,6 +14,8 @@
 
 #include "renderer.h"
 #include "sdkconfig.h"
+#include "utils.h"
+#include "shared_modules/cpu_cores/cpu_cores.h"
 
 #include "defines/config.h"
 
@@ -21,6 +23,10 @@
 #define PICO_FLASH_ASSERT_ON_UNSAFE 0
 
 struct uni_platform* get_rc_platform(void);
+
+static void shutdown_callback() {
+	btstack_run_loop_trigger_exit();
+}
 
 int main() {
 	// set_sys_clock_khz(25'000, false);
@@ -47,4 +53,10 @@ int main() {
 
 	// does not return
 	btstack_run_loop_execute();
+	utils_printf("btstack exited\n");
+
+	utils_printf("wifi and bt shutdown\n");
+	hci_power_control(HCI_POWER_OFF);
+	cyw43_arch_deinit();
+	cpu_cores_shutdown_from_core0();
 }

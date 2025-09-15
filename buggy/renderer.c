@@ -11,6 +11,7 @@
 #include "utils.h"
 #include "defines/config.h"
 #include "modules/engines/engines.h"
+#include "shared_modules/cpu_cores/cpu_cores.h"
 #include "shared_modules/v_monitor/v_monitor.h"
 
 volatile static bool can_set_state = true;
@@ -144,6 +145,7 @@ void renderer_loop() {
 				// shut down...
 				engines_drive(0);
 				engines_steer(0);
+				cpu_cores_send_shutdown_to_core0_from_core1();
 				return;
 			}
 		}

@@ -19,6 +19,16 @@ project(${PROJECT_NAME} C CXX ASM)
 
 pico_sdk_init()
 
+# Storage Flash layout. Set how many sectors to reserve; the rest is for code.
+if (NOT DEFINED FLASH_TOTAL_BYTES)
+	set(FLASH_TOTAL_BYTES 4194304 CACHE STRING "Total on-board flash size (bytes)") # Pico 2 flash size - 4 mB
+endif ()
+
+set(MOD_STORAGE_SECTOR_SIZE 4096 CACHE STRING "Flash sector size (bytes)") # Pico 2 sector size - 4 kB
+set(MOD_STORAGE_SECTORS 128 CACHE STRING "Number of sectors to reserve for storage")
+math(EXPR MOD_STORAGE_BYTES "${MOD_STORAGE_SECTORS} * ${MOD_STORAGE_SECTOR_SIZE}")
+math(EXPR APP_FLASH_BYTES "${FLASH_TOTAL_BYTES} - ${MOD_STORAGE_BYTES}")
+
 add_executable(${PROJECT_NAME}
 		defines/config.h
 		main.c
@@ -32,6 +42,16 @@ add_executable(${PROJECT_NAME}
 		modules/lights/lights.h
 		modules/engines/engines.c
 		modules/engines/engines.h
+		defines/app_settings_t.h
+)
+
+target_compile_definitions(${PROJECT_NAME} PRIVATE
+		PICO_FLASH_SIZE_BYTES=${FLASH_TOTAL_BYTES}
+		MOD_STORAGE_SECTORS=${MOD_STORAGE_SECTORS}
+		MOD_STORAGE_SECTOR_SIZE=${MOD_STORAGE_SECTOR_SIZE}
+		MOD_STORAGE_PAGE_SIZE=256 # Pico 2 page size in bytes
+		MOD_STORAGE_BYTES=${MOD_STORAGE_BYTES}
+		MOD_STORAGE_OFFSET=${APP_FLASH_BYTES}
 )
 
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -109,6 +129,8 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 		CYW43_PIO_CLOCK_DIV_DYNAMIC=1
 )
 
+target_compile_definitions(${PROJECT_NAME} PUBLIC PICO_MALLOC_PANIC=0)
+
 target_link_options(${PROJECT_NAME} PRIVATE
 		-mcpu=cortex-m33
 		-mtune=cortex-m33
@@ -152,6 +174,8 @@ target_link_libraries(${PROJECT_NAME}
 		hardware_dma
 		hardware_pwm
 		hardware_irq
+		pico_flash
+		hardware_flash
 		#		pico_rand
 		$<$<CONFIG:Debug>:hardware_uart>
 )
@@ -159,6 +183,13 @@ target_link_libraries(${PROJECT_NAME}
 add_subdirectory(${BLUEPAD32_ROOT}/src/components/bluepad32 libbluepad32)
 
 pico_add_extra_outputs(${PROJECT_NAME})
+
+configure_file(
+		${PICO_SHARED_COPY_PARENT}/pico-shared/memmap_storage.ld.in
+		${CMAKE_CURRENT_BINARY_DIR}/memmap_storage.ld
+		@ONLY
+)
+pico_set_linker_script(${PROJECT_NAME} ${CMAKE_CURRENT_BINARY_DIR}/memmap_storage.ld)
 
 if (CMAKE_BUILD_TYPE STREQUAL "Release")
 	add_custom_command(

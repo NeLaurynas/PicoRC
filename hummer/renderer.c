@@ -1,6 +1,7 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <hardware/timer.h>
 #include <pico/cyw43_arch.h>
@@ -8,12 +9,18 @@
 #include "renderer.h"
 #include "shared_config.h"
 #include "state.h"
+#include "str.h"
 #include "utils.h"
-#include "cmake-build-debug/pico-shared_src/pico-shared/shared_modules/cpu_cores/cpu_cores.h"
 #include "defines/config.h"
 #include "modules/engines/engines.h"
 #include "modules/lights/lights.h"
+#include "shared_modules/cpu_cores/cpu_cores.h"
+#include "shared_modules/storage/storage.h"
 #include "shared_modules/v_monitor/v_monitor.h"
+
+#include "defines/app_settings_t.h"
+#include "pico/flash.h"
+#include "pico/unique_id.h"
 
 volatile static bool can_set_state = true;
 
@@ -128,7 +135,7 @@ static void render_state() {
 	if (current_state.btn_a != state.btn_a) {
 		if (state.btn_a) {
 			utils_printf("!!!! pressed btn A\n");
-			// TODO: hand brake!
+			cpu_cores_send_shutdown_to_core0_from_core1();
 		}
 		current_state.btn_a = state.btn_a;
 	}
@@ -141,9 +148,35 @@ static void render_state() {
 }
 
 static void init() {
+	flash_safe_execute_core_init();
+
 	v_monitor_init();
 	lights_init();
 	engines_init();
+
+	utils_crc_init();
+	if (!storage_init()) {
+		// first boot?
+		app_settings.boot_count = 1;
+		char tmp[32];
+		pico_get_unique_board_id_string(tmp, 32);
+		str_set(app_settings.device_name, 32, tmp);
+		str_set(app_settings.app_name, 32, "Hummer");
+		storage_save(&app_settings, sizeof app_settings);
+	} else {
+		storage_load(&app_settings, sizeof app_settings);
+
+		app_settings.boot_count = app_settings.boot_count + 1;
+		char tmp[32];
+		pico_get_unique_board_id_string(tmp, 32);
+		str_set(app_settings.device_name, 32, tmp);
+		// snprintf(tmp, sizeof tmp, "Pico 2 debug #%u", (unsigned)app_settings.boot_count);
+		// str_set(app_settings.device_name, 32, tmp);
+
+		storage_save(&app_settings, sizeof app_settings);
+	}
+
+	utils_printf("%s -> %s boot count: %u\n", app_settings.device_name, app_settings.app_name, app_settings.boot_count);
 }
 
 void renderer_loop() {
@@ -168,7 +201,7 @@ void renderer_loop() {
 		static i32 frame = 0;
 
 		// todo: uncomment...
-		 // if (frame == 0) {
+		 if (frame == 0) {
 		 	// const auto voltage = v_monitor_voltage(false);
 		 	// if (voltage < MOD_VMON_DEFAULT_REF) {
 		 		// shut down...
@@ -178,7 +211,21 @@ void renderer_loop() {
 				// TODO: lights also off
 		 		// return;
 		 	// }
-		 // }
+
+		 	// // memory test
+		 	// size_t size = (15 * 1024) + 256;
+		 	// void *buffer = malloc(size);
+		 	// if (buffer == NULL) {
+		 	// 	printf("Allocation of %zu bytes failed\n", size);
+		 	// } else {
+		 	// 	printf("Allocation succeeded (%d kB)\n", size / 1024);
+		 	// 	// free(buffer);
+		 	// }
+			 //
+		 	// dump_heap();
+		 	// size_t highest = largest_mallocable();
+		 	// printf("Largest allocatable: %u kB\n", highest / 1024);
+		 }
 
 		frame = (frame + 1) % TICKS;
 	}

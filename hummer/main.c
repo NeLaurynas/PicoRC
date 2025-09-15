@@ -15,16 +15,28 @@
 #include "renderer.h"
 #include "sdkconfig.h"
 #include "utils.h"
+#include "pico/flash.h"
+#include "pico/util/queue.h"
 
 #include "shared_modules/cpu_cores/cpu_cores.h"
 
-#undef PICO_FLASH_ASSERT_ON_UNSAFE
-#define PICO_FLASH_ASSERT_ON_UNSAFE 0
+// #undef PICO_FLASH_ASSERT_ON_UNSAFE
+// #define PICO_FLASH_ASSERT_ON_UNSAFE 0
 
 struct uni_platform* get_rc_platform(void);
 
-static void shutdown_callback() {
-	btstack_run_loop_trigger_exit();
+static btstack_timer_source_t btstack_qpoll;
+static void qpoll_handler(btstack_timer_source_t *ts) {
+	i32 command;
+	while (queue_try_remove(&mod_cpu_core0_queue, &command)) if (command == CPU_CORES_CMD_SHUTDOWN) btstack_run_loop_trigger_exit();
+	btstack_run_loop_set_timer(ts, 100);
+	btstack_run_loop_add_timer(ts);
+}
+void btstack_handler_init() {
+	cpu_cores_init_from_core0();
+	btstack_run_loop_set_timer_handler(&btstack_qpoll, &qpoll_handler);
+	btstack_run_loop_set_timer(&btstack_qpoll, 100);
+	btstack_run_loop_add_timer(&btstack_qpoll);
 }
 
 int main() {
@@ -48,7 +60,8 @@ int main() {
 	uni_platform_set_custom(get_rc_platform());
 	uni_init(0, NULL);
 
-	cpu_cores_init_from_core0(shutdown_callback);
+	flash_safe_execute_core_init();
+	btstack_handler_init();
 
 	multicore_launch_core1(renderer_loop);
 

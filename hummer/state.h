@@ -1,7 +1,7 @@
 // Copyright (C) 2025 Laurynas 'Deviltry' Ekekeke
 // SPDX-License-Identifier: BSD-3-Clause
 
-#ifndef STATE_Htypedef uint32_t u32;
+#ifndef STATE_H
 #define STATE_H
 
 #include <shared_config.h>

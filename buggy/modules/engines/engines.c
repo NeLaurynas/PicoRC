@@ -102,7 +102,7 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 		}
 	} else {
 		pwm = (u16)((float)pwm * steer_beans_reduce);
-		gpio_put(MOD_ENGINES_ENABLE_STEER, val != 0);
+		gpio_put(MOD_ENGINES_ENABLE_STEER, val > 0 ? false : val != 0);
 		pwm_set_chan_level(slice2, channel2, pwm);
 	}
 }
@@ -115,6 +115,7 @@ void engines_drive(const i32 val) {
 }
 
 void engines_steer(const i32 val) {
+	utils_printf("%ld\n", val);
 	i32 pwm = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 10;
 	adjust_pwm(&pwm);
 

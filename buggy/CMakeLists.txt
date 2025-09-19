@@ -38,8 +38,6 @@ add_executable(${PROJECT_NAME}
 		state.h
 		renderer.c
 		renderer.h
-		modules/lights/lights.c
-		modules/lights/lights.h
 		modules/engines/engines.c
 		modules/engines/engines.h
 )

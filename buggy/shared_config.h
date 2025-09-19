@@ -42,15 +42,17 @@ typedef int8_t i8;
 #define MOD_WSLEDS_DMA_CH		1
 #define MOD_WSLEDS_PIN			18
 
-// VOLTAGE MONITOR
-#define MOD_VMON_RES_POS	296600.0f // 300k ohms
-#define MOD_VMON_RES_NEG	68000.0f // 68k ohms
-#define MOD_VMON_VREF		3.297f // Pico uses 3.3 volts for reference
+#define MOD_VMON_RES_POS	462181.0f // 470k Ω
+#define MOD_VMON_RES_NEG	99149.0f  // 100k Ω
+#define MOD_VMON_VREF		3.293f // real 3.3v reading
 #define MOD_VMON_ADC_PIN	26
 #define MOD_VMON_ADC		0
-#define MOD_VMON_DEFAULT_REF 9.92f
+#define MOD_VMON_DEFAULT_REF 10.0f
 
 // MISC
 #define INTERNAL_LED 0
+
+// STORAGE
+#define MOD_STORAGE_ENTRY_PAGES 1
 
 #endif //SHARED_CONFIG_H

@@ -71,27 +71,27 @@ static void adjust_pwm(i32 *pwm) {
 
 static inline float beans_reduce_by_battery_level() {
 	const float voltage = v_monitor_voltage(false);
-	constexpr float limit = MOD_VMON_DEFAULT_REF + 0.3f;
+	constexpr float limit = MOD_VMON_DEFAULT_REF + 0.5f;
 	return (voltage <= limit) ? 1.0f : (limit / voltage);
 }
 
 static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 	static constexpr u16 pwm_zero = 0;
-	static constexpr float steer_beans_reduce = 0.50f;
-	static constexpr float not_full_beans_reduce = 0.45f;
-	static constexpr float full_beans_reduce = 0.75f;
+	static constexpr float steer_beans_reduce = 1.0f;
+	static constexpr float not_full_beans_reduce = 0.55f;
+	// static constexpr float full_beans_reduce = 0.75f;
 
 	pwm = (u16)((float)pwm * beans_reduce_by_battery_level());
 
 	if (drive_engine) {
 		if (!current_state.full_beans) pwm = (u16)((float)pwm * not_full_beans_reduce);
-		else pwm = (u16)((float)pwm * full_beans_reduce);
+		// else pwm = (u16)((float)pwm * full_beans_reduce);
 
-		if (val > 0) {
+		if (val < 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
 			pwm_set_chan_level(slice3, channel3, pwm_zero);
 			pwm_set_chan_level(slice1, channel1, pwm);
-		} else if (val < 0) {
+		} else if (val > 0) {
 			gpio_put(MOD_ENGINES_ENABLE_DRIVE_1, true);
 			pwm_set_chan_level(slice1, channel1, pwm_zero);
 			pwm_set_chan_level(slice3, channel3, pwm);
@@ -102,7 +102,7 @@ static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 		}
 	} else {
 		pwm = (u16)((float)pwm * steer_beans_reduce);
-		gpio_put(MOD_ENGINES_ENABLE_STEER, val > 0 ? false : val != 0);
+		gpio_put(MOD_ENGINES_ENABLE_STEER, val < 0 ? false : val != 0);
 		pwm_set_chan_level(slice2, channel2, pwm);
 	}
 }

@@ -78,12 +78,12 @@ static inline float beans_reduce_by_battery_level() {
 static void set_motor_ctrl(const bool drive_engine, const i32 val, u16 pwm) {
 	static constexpr u16 pwm_zero = 0;
 	static constexpr float steer_beans_reduce = 1.0f;
-	static constexpr float not_full_beans_reduce = 0.55f;
+	static constexpr float not_full_beans_reduce = 0.69f;
 	// static constexpr float full_beans_reduce = 0.75f;
 
-	pwm = (u16)((float)pwm * beans_reduce_by_battery_level());
-
 	if (drive_engine) {
+		pwm = (u16)((float)pwm * beans_reduce_by_battery_level());
+
 		if (!current_state.full_beans) pwm = (u16)((float)pwm * not_full_beans_reduce);
 		// else pwm = (u16)((float)pwm * full_beans_reduce);
 
@@ -115,7 +115,6 @@ void engines_drive(const i32 val) {
 }
 
 void engines_steer(const i32 val) {
-	utils_printf("%ld\n", val);
 	i32 pwm = utils_scaled_pwm_percentage(val, MOD_ENGINE_XY_DEAD_ZONE, MOD_ENGINE_XY_MAX) * 10;
 	adjust_pwm(&pwm);
 

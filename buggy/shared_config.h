@@ -54,5 +54,6 @@ typedef int8_t i8;
 
 // STORAGE
 #define MOD_STORAGE_ENTRY_PAGES 1
+#define MOD_STORAGE_DATA_TYPES 0
 
 #endif //SHARED_CONFIG_H
